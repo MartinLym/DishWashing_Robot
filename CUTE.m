@@ -47,6 +47,17 @@ classdef CUTE < handle
             qlimH = [-2.5, 2.5];
             qlimV = [-1.8, 1.8];
             
+            L1 = Link('d', 0.0872,'a', 0,'alpha', -pi/2,'offset', -pi/2,'qlim', qlimH);
+            L2 = Link('d', 0.0628,'a', 0,'alpha', pi/2,'offset',0,'qlim', qlimV);
+            L3 = Link('d', 0.07683,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimH);
+            L4 = Link('d', 0.048827,'a', 0,'alpha', pi/2,'offset', 0,'qlim', qlimV);
+            L5 = Link('d', 0.06663,'a', 0,'alpha', pi/2,'offset', pi,'qlim', qlimV);
+            L6 = Link('d', 0.06663,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimV);
+            L7 = Link('d', 0.027,'a', 0,'alpha', 0,'offset', 0,'qlim', qlimH);
+            self.model = SerialLink([L1 L2 L3 L4 L5 L6 L7],'name',name);
+            %self.model.base = self.model.base * transl(0,0,0.1);
+        end
+        %{
             L1 = Link('d', 0.0872,'a', 0,'alpha', 0,'offset', -pi/2,'qlim', qlimH);
             L2 = Link('d', 0.0628,'a', 0,'alpha', pi/2,'offset', pi/2,'qlim', qlimV);
             L3 = Link('d', 0.07683,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimH);
@@ -55,16 +66,6 @@ classdef CUTE < handle
             L6 = Link('d', 0.06663,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimV);
             L7 = Link('d', 0.027,'a', 0,'alpha', -pi/2,'offset', -pi/2,'qlim', qlimH);
             self.model = SerialLink([L1 L2 L3 L4 L5 L6 L7],'name',name);
-            %self.model.base = self.model.base * transl(0,0,0.1);
-        end
-        %{
-            L1 = Link('d', 0.0872,'a', 0,'alpha', pi,'offset', 0,'qlim', qlimH);
-            L2 = Link('d', 0.0628,'a', 0,'alpha', -pi,'offset', 0,'qlim', qlimV);
-            L3 = Link('d', 0.07683,'a', 0,'alpha', 0,'offset', 0,'qlim', qlimH);
-            L4 = Link('d', 0.048827,'a', 0,'alpha', 0,'offset', 0,'qlim', qlimV);
-            L5 = Link('d', 0.06663,'a', 0,'alpha', pi/2,'offset', 0,'qlim', qlimV);
-            L6 = Link('d', 0.06663,'a', 0,'alpha', -1.8142,'offset', 0,'qlim', qlimV);
-            L7 = Link('d', 0.027,'a', 0,'alpha', -1.2645,'offset', 0,'qlim', qlimH);
         %}
         
         function jointStates = getJointStates(self)
@@ -83,7 +84,7 @@ classdef CUTE < handle
         function initPublisher(self, interpolationSteps)
             self.steps = interpolationSteps;
             for i = 1:self.steps
-               jointTrajPoint = rosmessage('trajectory_msgs/JointTrajectoryPoint')
+               jointTrajPoint = rosmessage('trajectory_msgs/JointTrajectoryPoint');
                self.jointTrajMsg.Points = [self.jointTrajMsg.Points; jointTrajPoint];
             end
         end
