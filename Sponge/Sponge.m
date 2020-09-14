@@ -13,23 +13,23 @@ classdef Sponge
      methods
         function self = Sponge()
             % load brick
-            [brickFaceData,brickVertexData,brickData] = plyread('brick9.ply','tri');
+            [FaceData,VertexData,data] = plyread('brick9.ply','tri');
             
             % Get vertex count
-            self.vertexCount = size(brickVertexData,1);
+            self.vertexCount = size(VertexData,1);
             
             % Move center point to origin
-            self.midPoint = sum(brickVertexData)/self.vertexCount;
-            self.verts = brickVertexData - repmat(self.midPoint,self.vertexCount,1);
+            self.midPoint = sum(VertexData)/self.vertexCount;
+            self.verts = VertexData - repmat(self.midPoint,self.vertexCount,1);
             
             % Create a transform to describe the location (at the origin, since it's centered
             self.pose = eye(4);
             
             % Scale the colours to be 0-to-1 (they are originally 0-to-255
-            brickVertexColours = [brickData.vertex.red, brickData.vertex.green, brickData.vertex.blue] / 255;
+            VertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
             
-            self.mesh = trisurf(brickFaceData,self.verts(:,1),self.verts(:,2), self.verts(:,3) ...
-            ,'FaceVertexCData',brickVertexColours,'EdgeColor','interp','EdgeLighting','flat');                        
+            self.mesh = trisurf(FaceData,self.verts(:,1),self.verts(:,2), self.verts(:,3) ...
+            ,'FaceVertexCData',VertexColours,'EdgeColor','interp','EdgeLighting','flat');                        
         end
         
         

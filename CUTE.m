@@ -48,14 +48,14 @@ classdef CUTE < handle
             qlimV = [-1.8, 1.8];
             
             L1 = Link('d', 0.0872,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimH);
-            L2 = Link('d', 0,'a', 0.0628,'alpha', pi/2,'offset', 0,'qlim', qlimV);
-            L3 = Link('d', 0.07683,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimH);
+            L2 = Link('d', 0,'a', 0.0628,'alpha', pi/2,'offset', 0,'qlim', deg2rad([-103 0])); %qlimV
+            L3 = Link('d', 0.07683,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimH); %qlimH
             L4 = Link('d', 0,'a', 0.048827,'alpha', -pi/2,'offset', -pi/2,'qlim', qlimV);
             L5 = Link('d', 0,'a', 0.06663,'alpha', pi/2,'offset', 0,'qlim', qlimV);
-            L6 = Link('d', 0,'a', 0.06663,'alpha', -pi/2,'offset', -pi/2,'qlim', qlimV);
+            L6 = Link('d', 0,'a', 0.06663,'alpha', -pi/2,'offset', -pi/2,'qlim',deg2rad([-14.4 103])); %qlimV
             L7 = Link('d', 0.055,'a', 0,'alpha', 0,'offset', 0,'qlim', qlimH);
+            
             self.model = SerialLink([L1 L2 L3 L4 L5 L6 L7],'name',name);
-            %self.model.base = self.model.base * transl(0,0,0.1);
         end
         %{
             L1 = Link('d', 0.0872,'a', 0,'alpha', 0,'offset', -pi/2,'qlim', qlimH);
