@@ -17,28 +17,28 @@ classdef CUTE < handle
     
     methods
         
-        function self = CUTE(useGripper)
+        function self = CUTE()
             self.GetCUTEROBOT();
             
-            self.jointStates = zeros(1,9);
-            self.jointStateTopic = '/joint_states';
-            %self.jointStateSub = rossubscriber(self.jointStateTopic, 'sensor_msgs/JointState');
-            
-            self.jointNames = ["joint1", ...
-                               "joint2", ...
-                               "joint3", ...
-                               "joint4", ...
-                               "joint5", ...
-                               "joint6", ...
-                               "joint7"];
-                               
-            self.jointTrajMsgType = 'trajectory_msgs/JointTrajectory';
-            self.jointTrajTopic = '/cute_arm_controller/command';
-            self.jointTrajMsg = rosmessage(self.jointTrajMsgType);
-            self.jointTrajMsg.JointNames = self.jointNames;
-            %self.jointTrajPub = rospublisher(self.jointTrajTopic,self.jointTrajMsgType);
-
-            self.steps = 0;
+%             self.jointStates = zeros(1,9);
+%             self.jointStateTopic = '/joint_states';
+%             %self.jointStateSub = rossubscriber(self.jointStateTopic, 'sensor_msgs/JointState');
+%             
+%             self.jointNames = ["joint1", ...
+%                                "joint2", ...
+%                                "joint3", ...
+%                                "joint4", ...
+%                                "joint5", ...
+%                                "joint6", ...
+%                                "joint7"];
+%                                
+%             self.jointTrajMsgType = 'trajectory_msgs/JointTrajectory';
+%             self.jointTrajTopic = '/cute_arm_controller/command';
+%             self.jointTrajMsg = rosmessage(self.jointTrajMsgType);
+%             self.jointTrajMsg.JointNames = self.jointNames;
+%             %self.jointTrajPub = rospublisher(self.jointTrajTopic,self.jointTrajMsgType);
+% 
+%             self.steps = 0;
         end
         
         function GetCUTEROBOT(self)
