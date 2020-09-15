@@ -1,4 +1,4 @@
-classdef Plate
+classdef Plate < handle
     % This class creates the bricks using plyread and updates brick
     % locations.
     
@@ -13,7 +13,7 @@ classdef Plate
      methods
         function self = Plate()
             % load brick
-            [FaceData,VertexData,data] = plyread('plate.ply','tri');
+            [FaceData,VertexData,data] = plyread('plate3.ply','tri');
             
             % Get vertex count
             self.vertexCount = size(VertexData,1);
