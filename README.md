@@ -11,17 +11,17 @@ Assignment checklist
 
 - insert real robot model - martin
 
-- 1) GUI - Jenn
+- 1 GUI - Jenn
   - Teach Toolbox (move each joint individually)
   - x,y,z end effector has to move there
   - 2) E-STOP, must resume task after resuming 
 
-- 4) active avoidance collision, visual servoing RMRC - Martin
+- 4 active avoidance collision, visual servoing RMRC - Martin
   - a) react to an asynchronous stop signal by a user
   - b) robot will stop until there is no predicted collision or move to avoid the collision
   - c) robot retreat from a simulated safety symbol using visual servoing and RMRC
   
-- 3) Environment - jenn & martin
+- 3 Environment - jenn & martin
   - sink
   - plate stand
   - sponge(bubbles can appear)
