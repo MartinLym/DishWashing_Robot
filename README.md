@@ -2,12 +2,12 @@
 
 Assignment checklist
 
-WEEK 9 - SWMS
-WEEK 11 - 1 min video
-WEEK 12 - demo + video
+- WEEK 9 - SWMS
+- WEEK 11 - 1 min video
+- WEEK 12 - demo + video
 
-✓ make classes - jenn
-✓ dishwashing robot arm movement - jenn
+- ✓ make classes - jenn
+- ✓ dishwashing robot arm movement - jenn
 
 - insert real robot model - martin
 
