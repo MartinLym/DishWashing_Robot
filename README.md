@@ -6,8 +6,8 @@ Assignment checklist
 - WEEK 11 - 1 min video
 - WEEK 12 - demo + video
 
-- ✓ make classes - jenn
-- ✓ dishwashing robot arm movement - jenn
+- make classes - jenn ✓
+- dishwashing robot arm movement - jenn ✓
 
 - insert real robot model - martin
 
@@ -23,6 +23,8 @@ Assignment checklist
   - c) robot retreat from a simulated safety symbol using visual servoing and RMRC
   
 - 3 Environment - jenn & martin
+  - plate✓
+  - sponge✓
   - sink
   - plate stand
   - sponge(bubbles can appear)
