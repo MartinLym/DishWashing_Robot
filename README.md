@@ -8,7 +8,7 @@ Assignment checklist
 
 - make classes - jenn ✓
 - dishwashing robot arm movement - jenn ✓
-
+- find dh para for robot - martin ✓
 - insert real robot model - martin
 
 - 1 GUI - Jenn
