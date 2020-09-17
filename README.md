@@ -14,7 +14,8 @@ Assignment checklist
 - 1 GUI - Jenn
   - Teach Toolbox (move each joint individually)
   - x,y,z end effector has to move there
-  - 2) E-STOP, must resume task after resuming 
+  
+  2 E-STOP, must resume task after resuming - jenn
 
 - 4 active avoidance collision, visual servoing RMRC - Martin
   - a) react to an asynchronous stop signal by a user
