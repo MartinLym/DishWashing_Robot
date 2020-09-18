@@ -20,6 +20,11 @@ Assignment checklist
 - 4 active avoidance collision, visual servoing RMRC - Martin
   - a) react to an asynchronous stop signal by a user
   - b) robot will stop until there is no predicted collision or move to avoid the collision
+       Using RRT to do path planning
+        Current Issues:
+            - Nodes generated are not in the workspace of the robot
+            - Nodes require a check collision function
+            - Path determined isn't the shortest path 
   - c) robot retreat from a simulated safety symbol using visual servoing and RMRC
   
 - 3 Environment - jenn & martin
