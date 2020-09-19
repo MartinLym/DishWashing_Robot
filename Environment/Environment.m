@@ -1,19 +1,47 @@
 classdef Environment
-    %ENVIRONMENT Summary of this class goes here
-    %   Detailed explanation goes here
+    % ENVIRONMENT Summary of this class goes here
+    % Detailed explanation goes here
     
     properties
+        % Defines object appearance and pose
         pose;
         vertexCount;
         midPoint;
         verts;
-        mesh;        
+        mesh_h; 
+        
+        % Defines object 
+        centrePt;
+        objEnvironment;
     end
     
     methods
-        function self = Environment()
-            self.Sponge();
-            camlight;
+        function self = Environment(posX, posY, posZ, file, show, side, height)
+            % section below for object appearance and pose
+            self.pose = makehgtform('translate', [posX, posY, posZ]) * trotx(pi);
+            [f,v,data] = plyread(file,'tri');
+            self.vertexCount = size(v,1);
+            self.midPoint = sum(v)/self.vertexCount;
+            self.verts = v - repmat(self.midPoint,self.vertexCount,1);
+
+            vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
+            self.mesh_h = trisurf(f, v(:,1) + self.pose(1,4), v(:,2) + self.pose(2,4), ...
+                v(:,3)+ self.pose(3,4),'FaceVertexCData',vertexColours,'EdgeColor','interp','EdgeLighting','flat');
+            
+            % section below for object avoidance collision
+            self.centrePt = [posX, posY, posZ];
+            self.centrePt(3) = self.centrePt(3) + height;
+            lower = self.centrePt;
+            self.centrePt(3) = self.centrePt(3) - (height*2);
+            upper = self.centrePt;
+            
+            plotOptions.plotFaces = show;
+            [vertex,faces,faceNormals] = RectangularPrism(lower-side/2, upper+side/2, plotOptions);
+            field1 = 'vertex'; 
+            field2 = 'faces'; 
+            field3 = 'faceNormals';
+            self.objEnvironment = struct(field1, vertex, field2, faces, field3, faceNormals);
+                        
         end
         
         function Sponge(self)
