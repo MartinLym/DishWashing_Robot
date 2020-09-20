@@ -1,11 +1,11 @@
 classdef CUTE < handle
-    properties 
+    properties
         model;
-        workspace = [-1 1 -1 1 -1 1];   
+        workspace = [-1 1 -1 1 -1 1];
         
         jointStateTopic;
         jointStateSub;
-        jointStates; 
+        jointStates;
         
         jointNames;
         jointTrajMsgType;
@@ -20,25 +20,25 @@ classdef CUTE < handle
         function self = CUTE()
             self.GetCUTEROBOT();
             
-%             self.jointStates = zeros(1,9);
-%             self.jointStateTopic = '/joint_states';
-%             %self.jointStateSub = rossubscriber(self.jointStateTopic, 'sensor_msgs/JointState');
-%             
-%             self.jointNames = ["joint1", ...
-%                                "joint2", ...
-%                                "joint3", ...
-%                                "joint4", ...
-%                                "joint5", ...
-%                                "joint6", ...
-%                                "joint7"];
-%                                
-%             self.jointTrajMsgType = 'trajectory_msgs/JointTrajectory';
-%             self.jointTrajTopic = '/cute_arm_controller/command';
-%             self.jointTrajMsg = rosmessage(self.jointTrajMsgType);
-%             self.jointTrajMsg.JointNames = self.jointNames;
-%             %self.jointTrajPub = rospublisher(self.jointTrajTopic,self.jointTrajMsgType);
-% 
-%             self.steps = 0;
+            %             self.jointStates = zeros(1,9);
+            %             self.jointStateTopic = '/joint_states';
+            %             %self.jointStateSub = rossubscriber(self.jointStateTopic, 'sensor_msgs/JointState');
+            %
+            %             self.jointNames = ["joint1", ...
+            %                                "joint2", ...
+            %                                "joint3", ...
+            %                                "joint4", ...
+            %                                "joint5", ...
+            %                                "joint6", ...
+            %                                "joint7"];
+            %
+            %             self.jointTrajMsgType = 'trajectory_msgs/JointTrajectory';
+            %             self.jointTrajTopic = '/cute_arm_controller/command';
+            %             self.jointTrajMsg = rosmessage(self.jointTrajMsgType);
+            %             self.jointTrajMsg.JointNames = self.jointNames;
+            %             %self.jointTrajPub = rospublisher(self.jointTrajTopic,self.jointTrajMsgType);
+            %
+            %             self.steps = 0;
         end
         
         function GetCUTEROBOT(self)
@@ -54,6 +54,14 @@ classdef CUTE < handle
             L5 = Link('d', 0,'a', 0.06663,'alpha', pi/2,'offset', 0,'qlim', qlimV);
             L6 = Link('d', 0,'a', 0.06663,'alpha', -pi/2,'offset', -pi/2,'qlim',deg2rad([-14.4 103])); %qlimV
             L7 = Link('d', 0.055,'a', 0,'alpha', 0,'offset', 0,'qlim', qlimH);
+            
+            %             L1 = Link('d', 0.0872,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimH);
+            %             L2 = Link('d', 0,'a', 0.0628,'alpha', pi/2,'offset', 0,'qlim', deg2rad([-103 0]));
+            %             L3 = Link('d', 0.07683,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', deg2rad(180));
+            %             L4 = Link('d', 0,'a', 0.048827,'alpha', -pi/2,'offset', -pi/2,'qlim', deg2rad(25));
+            %             L5 = Link('d', 0,'a', 0.06663,'alpha', pi/2,'offset', 0,'qlim', 0);
+            %             L6 = Link('d', 0,'a', 0.06663,'alpha', -pi/2,'offset', -pi/2,'qlim', deg2rad(60));
+            %             L7 = Link('d', 0.055,'a', 0,'alpha', 0,'offset', 0,'qlim', 0);
             
             self.model = SerialLink([L1 L2 L3 L4 L5 L6 L7],'name',name);
         end
@@ -78,14 +86,14 @@ classdef CUTE < handle
             jointStateMsg = self.jointStateSub.LatestMessage;
             if ~isempty(jointStateMsg)
                 self.jointStates = jointStateMsg.Position';
-           end
+            end
         end
         
         function initPublisher(self, interpolationSteps)
             self.steps = interpolationSteps;
             for i = 1:self.steps
-               jointTrajPoint = rosmessage('trajectory_msgs/JointTrajectoryPoint');
-               self.jointTrajMsg.Points = [self.jointTrajMsg.Points; jointTrajPoint];
+                jointTrajPoint = rosmessage('trajectory_msgs/JointTrajectoryPoint');
+                self.jointTrajMsg.Points = [self.jointTrajMsg.Points; jointTrajPoint];
             end
         end
         
