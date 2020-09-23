@@ -32,7 +32,7 @@ classdef HANSCUTE < handle
             self.model = SerialLink([L1 L2 L3 L4 L5 L6 L7],'name',name);
         end
         
-        function initCuteRobot(self)
+        function initCuteRobot(self) %Used to identify the workspace of the robot
             stepRads = deg2rad(60);
             qlimH = [-2.5, 2.5];
             qlimV = [-1.8, 1.8];
@@ -79,6 +79,7 @@ classdef HANSCUTE < handle
         end
         
         function moveCuteRobot(self, startPose, endPose, numNodes, obj) % Uses RRT* to avoid inputted objects
+            % Grabs start pose and end pose for RRT* path planning
             self.startPose = startPose;
             self.endPose = endPose;
             startCoord = self.startPose(1:3, 4)';
@@ -91,8 +92,10 @@ classdef HANSCUTE < handle
             stepSize = 0.04; % Placement of next node radius size
             
             node(1) = q_conf; 
-            numOfObj = numel(obj);
+            numOfObj = numel(obj); % used to iterate through the number of objects
             
+            % Section below for the bounds of the rrt* points within the
+            % workspace
             x_min = min(self.pointCloud(:,1));
             x_max = max(self.pointCloud(:,1));
             y_min = min(self.pointCloud(:,2));
@@ -102,17 +105,22 @@ classdef HANSCUTE < handle
             
             for i = 1:1:numNodes
                 [q_near, q_rand, val] = getNearNode(node, x_min, x_max, y_min, y_max, z_min, z_max);
-                q_new.coord = steer3d(q_rand, q_near.coord, val, stepSize);
+                q_new.coord = steer3d(q_rand, q_near.coord, val, stepSize); % obtains a new node
                 
                 q1Node = q_near.coord;
                 q2Node = q_new.coord;
                 
-                safe = checkCollision(obj, numOfObj, q1Node, q2Node);
+                % checks if the new node is colliding with any objects, if
+                % safe = 1, no collision in environment 
+                % safe = 0, there is collision and will retrieve new node
+                % from the beginning of for loop
+                safe = checkCollision(obj, numOfObj, q1Node, q2Node); 
                 
                 if safe == 1
-                   %disp('here'); 
                    q_new.cost = dist_3d(q_new.coord, q_near.coord) + q_near.cost;
                    
+                   % section below checks the new node for any neighbour
+                   % nodes to connect to
                    q_nearest = [];
                    r = 0.05; % <----- radius to search for nearest neighbour nodes
                    neighbor_count = 1;
@@ -126,7 +134,8 @@ classdef HANSCUTE < handle
                    
                    q_min = q_near;
                    C_min = q_new.cost;
-                   
+                   % Iterates through the nearest neighbour nodes and finds
+                   % the closest one
                    for k = 1:1:length(q_nearest)
                        if q_nearest(k).cost + dist_3d(q_nearest(k).coord, q_new.coord) < C_min
                            q_min = q_nearest(k);
@@ -148,13 +157,12 @@ classdef HANSCUTE < handle
             end
             
             % coordMatrix layout [x y z]
-            [coordMatrix, numWayPoints] = generatePath(node, q_goal);
+            [coordMatrix, numWayPoints] = generatePath(node, q_goal); % generates the shortest path through the tree
             
+            % Section below is for RMRC
             [qMatrix, trMatrix] = obtainPoseJointMatrices(self, coordMatrix, numWayPoints);
-            size(qMatrix, 1)
             [velMatrix, error] = obtainVelocityMatrix(self, qMatrix, trMatrix);
-            size(velMatrix, 1)
-            %moveThroughPath(self, coordMatrix, numWayPoints);
+            
             for i = 1:2:size(velMatrix,1)
                self.model.animate(velMatrix(i,:)); 
             end           
@@ -254,9 +262,7 @@ function safe = checkCollision(obj, numOfObj, q1Node, q2Node)
 end
 
 function [q_near, q_rand, val] = getNearNode(node, x_min, x_max, y_min, y_max, z_min, z_max) 
-    %x_max = 0.4;
-    %y_max = 0.4;
-    %z_max = 0.4;
+    % section below chooses a random point within the bounds
     xRand = x_min + (x_max + x_max) * rand(1);
     yRand = y_min + (y_max + y_max) * rand(1);
     zRand = (z_max - z_min).*rand(1);
