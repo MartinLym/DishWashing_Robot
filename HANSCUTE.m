@@ -5,6 +5,8 @@ classdef HANSCUTE < handle
     properties
         model;
         pointCloud;
+        startPose;
+        endPose;
     end
     
     methods
@@ -76,13 +78,17 @@ classdef HANSCUTE < handle
             
         end
         
-        function moveCuteRobot(self, startCoord, endCoord, numNodes, obj)
+        function moveCuteRobot(self, startPose, endPose, numNodes, obj) % Uses RRT* to avoid inputted objects
+            self.startPose = startPose;
+            self.endPose = endPose;
+            startCoord = self.startPose(1:3, 4)';
+            endCoord = self.endPose(1:3, 4)';
             q_conf.coord = startCoord;
             q_conf.cost = 0;
             q_conf.parent = 0;
             q_goal.coord = endCoord;
             q_goal.cost = 0;
-            stepSize = 0.04;
+            stepSize = 0.04; % Placement of next node radius size
             
             node(1) = q_conf; 
             numOfObj = numel(obj);
@@ -125,7 +131,7 @@ classdef HANSCUTE < handle
                        if q_nearest(k).cost + dist_3d(q_nearest(k).coord, q_new.coord) < C_min
                            q_min = q_nearest(k);
                            C_min = q_nearest(k).cost + dist_3d(q_nearest(k).coord, q_new.coord);
-                           line([q_min.coord(1), q_new.coord(1)], [q_min.coord(2), q_new.coord(2)], [q_min.coord(3), q_new.coord(3)], 'Color', 'g');
+                           %line([q_min.coord(1), q_new.coord(1)], [q_min.coord(2), q_new.coord(2)], [q_min.coord(3), q_new.coord(3)], 'Color', 'g');
                            hold on
                        end
                    end
@@ -141,9 +147,82 @@ classdef HANSCUTE < handle
                 end
             end
             
-            [coordMatrix, counter] = generatePath(node, q_goal);
+            % coordMatrix layout [x y z]
+            [coordMatrix, numWayPoints] = generatePath(node, q_goal);
             
-            moveThroughPath(self, coordMatrix, counter);
+            [qMatrix, trMatrix] = obtainPoseJointMatrices(self, coordMatrix, numWayPoints);
+            size(qMatrix, 1)
+            [velMatrix, error] = obtainVelocityMatrix(self, qMatrix, trMatrix);
+            size(velMatrix, 1)
+            %moveThroughPath(self, coordMatrix, numWayPoints);
+            for i = 1:2:size(velMatrix,1)
+               self.model.animate(velMatrix(i,:)); 
+            end           
+            
+        end
+        
+        function [qMatrix, trMatrix] = obtainPoseJointMatrices(self, coordMatrix, numWayPoints) 
+                steps = 100;
+                qCurrent = self.model.getpos;                
+                qMatrix = [];
+                
+                % Get Pose Transformation Matrix
+                trMatrix = zeros(4,4,numWayPoints);
+                for i = 1:1:numWayPoints
+                    coordTr = trotx(pi);
+                    coordTr(:,4) = [coordMatrix(i,:)'; 1];
+                    trMatrix(:,:,i) = coordTr;
+                end
+                
+                % Get Joint Configuration Matrix
+                qChange = qCurrent;
+                for i = 1:1:numWayPoints
+                    qStart = qChange;
+                    q = nan(steps,7);
+                    [qEnd, err, exitFlag] = self.model.ikcon(trMatrix(:,:,i), qStart);
+                    s = lspb(0,1,steps); 
+                    
+                    for j = 1:steps
+                        q(j,:) = (1-s(j))*qStart + s(j)*qEnd;
+                    end
+                    
+                    qMatrix = [qMatrix; q];
+                    qChange = qEnd;
+                end
+                
+                trMatrix = zeros(4,4,size(qMatrix, 1));
+                for i = 1:size(qMatrix, 1)
+                    trMatrix(:,:,i) = self.model.fkine(qMatrix(i,:));
+                end
+        end
+        
+        function [velMatrix, error] = obtainVelocityMatrix(self,qMatrix, trMatrix)
+            velMatrix = zeros(size(qMatrix,1), 7);
+            %velMatrix(1,:) = qMatrix(1, :);
+            error = nan(6, size(qMatrix, 1));
+            deltaT = 0.05;
+            
+            for i = 1:size(qMatrix,1)-1
+               dq = qMatrix(i+1,:) - qMatrix(i,:)
+               dq = max(dq);
+               poseDot = (trMatrix(:,:,i+1) - trMatrix(:,:,i)) / dq; %deltaT
+               dRDot = poseDot(1:3, 1:3);
+               R = trMatrix(1:3,1:3,i);
+               
+               sMatrix = dRDot * R';
+               angVel = vex(sMatrix);
+               nu = [poseDot(1:3,4); angVel];
+               
+               J = self.model.jacob0(qMatrix(i,:));
+               q = pinv(J) * nu;
+               q = q';
+               N = null(J);
+               nspm = norm(J * N);
+               
+               %error(:,i) = nu - J*q';
+               velMatrix(i,:) = qMatrix(i,:) + dq*q + nspm;
+               
+            end
         end
         
     end
@@ -215,28 +294,5 @@ function [coordMatrix, counter] = generatePath(node, q_goal)
         hold on
         q_end = node(start);
         counter = counter + 1;
-    end
-end
-
-function moveThroughPath(self, coordMatrix, counter)
-    trMatrix = zeros(4,4,counter);
-    for i = 1:1:counter
-        coordTr = trotz(0);
-        coordTr(:,4) = [coordMatrix(i,:)'; 1];
-        trMatrix(:,:,i) = coordTr;
-    end
-    
-    mask = [1 1 1 0 0 0];
-    for i = 1:1:counter
-        q0 = self.model.getpos();
-        q1 = self.model.ikine(trMatrix(:,:,i), q0, mask);
-        steps = 2;
-        while ~isempty(find(1 < abs(diff(rad2deg(jtraj(q0,q1,steps)))),1))
-            steps = steps + 1;
-        end
-        qMatrix = jtraj(q0,q1,steps);
-        for i = 1:steps
-           self.model.animate(qMatrix(i,:)); 
-        end
     end
 end
