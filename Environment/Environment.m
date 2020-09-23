@@ -18,7 +18,7 @@ classdef Environment
     methods
         function self = Environment(posX, posY, posZ, file, show, side, height)
             % section below for object appearance and pose
-            self.pose = makehgtform('translate', [posX, posY, posZ]) * trotx(pi);
+            self.pose = makehgtform('translate', [posX, posY, posZ]);
             [f,v,data] = plyread(file,'tri');
             self.vertexCount = size(v,1);
             self.midPoint = sum(v)/self.vertexCount;
