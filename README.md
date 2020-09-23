@@ -22,10 +22,10 @@ Assignment checklist
   - b) robot will stop until there is no predicted collision or move to avoid the collision
        Using RRT to do path planning to avoid collision
         Current Issues:
-            - Nodes generated are not in the workspace of the robot ✓-ISH
+            - Nodes generated are not in the workspace of the robot ✓
             - Nodes require a check collision function ✓
-            - Path determined isn't the shortest path ✓-ISH
-  - c) robot retreat from a simulated safety symbol using visual servoing and RMRC
+            - Path determined isn't the shortest path ✓-ISH, no priority just requires optimisation
+  - c) robot retreat from a simulated safety symbol using visual servoing and RMRC ✓, visual servoing 
   
 - 3 Environment - jenn & martin
   - plate✓
