@@ -6,7 +6,9 @@ classdef HANSCUTE < handle
         model;
         pointCloud;
         startPose;
+        qStart;
         endPose;
+        qEnd;
     end
     
     methods
@@ -22,11 +24,11 @@ classdef HANSCUTE < handle
             qlimV = [-1.8, 1.8];
             
             L1 = Link('d', 0.0872,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimH);
-            L2 = Link('d', 0,'a', 0.0628,'alpha', pi/2,'offset', 0,'qlim', qlimV); %qlimV
-            L3 = Link('d', 0.07683,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimH); %qlimH
-            L4 = Link('d', 0,'a', 0.048827,'alpha', -pi/2,'offset', -pi/2,'qlim', qlimV);
-            L5 = Link('d', 0,'a', 0.06663,'alpha', pi/2,'offset', 0,'qlim', qlimV);
-            L6 = Link('d', 0,'a', 0.06663,'alpha', -pi/2,'offset', -pi/2,'qlim',qlimV); %qlimV
+            L2 = Link('d', 0,'a', 0,'alpha', pi/2,'offset', 0,'qlim', qlimV); %qlimV
+            L3 = Link('d', 0.0768,'a', 0,'alpha', -pi/2,'offset',0,'qlim', qlimH); %qlimH
+            L4 = Link('d', 0,'a', 0.0488,'alpha', -pi/2,'offset', -pi/2,'qlim', qlimV);
+            L5 = Link('d', 0,'a', 0.0663,'alpha', pi/2,'offset', 0,'qlim', qlimV);
+            L6 = Link('d', 0,'a', 0,'alpha', -pi/2,'offset', -pi/2,'qlim',qlimV); %qlimV
             L7 = Link('d', 0.055,'a', 0,'alpha', 0,'offset', 0,'qlim', qlimH);
             
             self.model = SerialLink([L1 L2 L3 L4 L5 L6 L7],'name',name);
@@ -78,10 +80,13 @@ classdef HANSCUTE < handle
             
         end
         
-        function moveCuteRobot(self, startPose, endPose, numNodes, obj) % Uses RRT* to avoid inputted objects
+        function [qMatrix, velMatrix, trMatrix, poseMatrix, coordMatrix] = obtainMotionMatrices(self, startPose, endPose, numNodes, obj) % Uses RRT* to avoid inputted objects
             % Grabs start pose and end pose for RRT* path planning
             self.startPose = startPose;
             self.endPose = endPose;
+            self.qStart = self.model.ikcon(startPose, self.model.getpos);
+            self.qEnd = self.model.ikcon(endPose);
+            
             startCoord = self.startPose(1:3, 4)';
             endCoord = self.endPose(1:3, 4)';
             q_conf.coord = startCoord;
@@ -160,34 +165,45 @@ classdef HANSCUTE < handle
             [coordMatrix, numWayPoints] = generatePath(node, q_goal); % generates the shortest path through the tree
             
             % Section below is for RMRC
-            [qMatrix, trMatrix] = obtainPoseJointMatrices(self, coordMatrix, numWayPoints);
+            [qMatrix, trMatrix, poseMatrix] = obtainPoseJointMatrices(self, coordMatrix, numWayPoints);
             [velMatrix, error] = obtainVelocityMatrix(self, qMatrix, trMatrix);
-            
-            for i = 1:2:size(velMatrix,1)
-               self.model.animate(velMatrix(i,:)); 
-            end           
-            
+                        
         end
         
-        function [qMatrix, trMatrix] = obtainPoseJointMatrices(self, coordMatrix, numWayPoints) 
-                steps = 100;
-                qCurrent = self.model.getpos;                
-                qMatrix = [];
+        function [qMatrix, trMatrix, poseMatrix] = obtainPoseJointMatrices(self, coordMatrix, numWayPoints) 
+                steps = 100;                
+                q = [];
+                s = lspb(0,1,steps); 
                 
-                % Get Pose Transformation Matrix
-                trMatrix = zeros(4,4,numWayPoints);
-                for i = 1:1:numWayPoints
-                    coordTr = trotx(pi);
-                    coordTr(:,4) = [coordMatrix(i,:)'; 1];
-                    trMatrix(:,:,i) = coordTr;
+                for j = 1:steps
+                    q(j,:) = (1-s(j))*self.qStart + s(j)*self.qEnd;
+                end
+                % Obtain the rotation matrix to change as it moves through
+                % the trajectory
+                idxCounter = ceil((size(q,1)/numWayPoints));
+                idxMatrix = [];
+                for i = 1:idxCounter:size(q,1)
+                    idxMatrix = [idxMatrix i];
+                end
+                idxMatrix = [idxMatrix size(q,1)];
+                poseMatrix = zeros(4,4,size(idxMatrix,2));
+                poseMatrix(:,:,1) = self.startPose;
+                
+                % Concatenate the rotation matrix with the position vector
+                % from coordMatrix to also avoid objects
+                for k = 2:size(idxMatrix,2)
+                    poseMatrix(:,:,k) = self.model.fkine(q(idxMatrix(k),:));
+                    poseMatrix(:,4,k) = [coordMatrix(k-1,:)';1];
                 end
                 
-                % Get Joint Configuration Matrix
-                qChange = qCurrent;
-                for i = 1:1:numWayPoints
+                % Obtain the total joint configuration to prepare for
+                % velocity matrix
+                qMatrix = [];
+                qChange = self.qStart;
+                for i = 1:size(idxMatrix,2)
                     qStart = qChange;
                     q = nan(steps,7);
-                    [qEnd, err, exitFlag] = self.model.ikcon(trMatrix(:,:,i), qStart);
+                    [qEnd, err, exitFlag] = self.model.ikcon(poseMatrix(:,:,i), qStart);
                     s = lspb(0,1,steps); 
                     
                     for j = 1:steps
@@ -198,6 +214,8 @@ classdef HANSCUTE < handle
                     qChange = qEnd;
                 end
                 
+                % Obtain the total transforms from trajectory to find
+                % velocity
                 trMatrix = zeros(4,4,size(qMatrix, 1));
                 for i = 1:size(qMatrix, 1)
                     trMatrix(:,:,i) = self.model.fkine(qMatrix(i,:));
@@ -211,9 +229,9 @@ classdef HANSCUTE < handle
             deltaT = 0.05;
             
             for i = 1:size(qMatrix,1)-1
-               dq = qMatrix(i+1,:) - qMatrix(i,:)
+               dq = qMatrix(i+1,:) - qMatrix(i,:);
                dq = max(dq);
-               poseDot = (trMatrix(:,:,i+1) - trMatrix(:,:,i)) / dq; %deltaT
+               poseDot = (trMatrix(:,:,i+1) - trMatrix(:,:,i)) / deltaT; %deltaT
                dRDot = poseDot(1:3, 1:3);
                R = trMatrix(1:3,1:3,i);
                
@@ -228,9 +246,10 @@ classdef HANSCUTE < handle
                nspm = norm(J * N);
                
                %error(:,i) = nu - J*q';
-               velMatrix(i,:) = qMatrix(i,:) + dq*q + nspm;
+               velMatrix(i,:) = qMatrix(i,:) + deltaT*q + nspm;
                
             end
+            velMatrix(end,:) = velMatrix(end-1,:);
         end
         
     end
