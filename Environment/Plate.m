@@ -13,7 +13,7 @@ classdef Plate < handle
      methods
         function self = Plate()
             % load brick
-            [FaceData,VertexData,data] = plyread('plate3.ply','tri');
+            [FaceData,VertexData,data] = plyread('plate.ply','tri');
             
             % Get vertex count
             self.vertexCount = size(VertexData,1);
