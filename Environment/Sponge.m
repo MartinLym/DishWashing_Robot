@@ -13,7 +13,7 @@ classdef Sponge < handle
      methods
         function self = Sponge()
             % load brick
-            [FaceData,VertexData,data] = plyread('brick9.ply','tri');
+            [FaceData,VertexData,data] = plyread('sponge.ply','tri');
             
             % Get vertex count
             self.vertexCount = size(VertexData,1);
