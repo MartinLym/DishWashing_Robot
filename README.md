@@ -1,6 +1,6 @@
 # DishWashing_Robot
 
-** I don't know why my commits come up as byron (my friend). But it is me that committed. Maybe because I'm using byron's computer to commit. - Jenn
+** I don't know why my commits come up as Byron. But it is me that committed. Maybe because I'm using Byron's computer to commit. - Jenn
 
 
 Assignment checklist
@@ -33,9 +33,9 @@ Assignment checklist
 - 3 Environment - jenn & martin
   - plate✓
   - sponge✓
-  - sink
-  - sponge(bubbles can appear)
+  - sink✓
+  - sponge (bubbles can appear)
   - barrier
-  - estop
+  - estop✓
   - active sensors would stop the robot
   - other safety stuff
