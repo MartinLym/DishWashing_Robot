@@ -1,8 +1,11 @@
 # DishWashing_Robot
 
+** I don't know why my commits come up as byron (my friend). But it is me that committed. Maybe because I'm using byron's computer to commit. - Jenn
+
+
 Assignment checklist
 
-- WEEK 9 - SWMS
+- WEEK 9 - SWMS ✓
 - WEEK 11 - 1 min video
 - WEEK 12 - demo + video
 
@@ -31,7 +34,6 @@ Assignment checklist
   - plate✓
   - sponge✓
   - sink
-  - plate stand
   - sponge(bubbles can appear)
   - barrier
   - estop
