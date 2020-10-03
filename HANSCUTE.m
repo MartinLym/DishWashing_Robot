@@ -80,7 +80,7 @@ classdef HANSCUTE < handle
             
         end
         
-        function [qMatrix, sendQMatrix, velMatrix, trMatrix, poseMatrix, coordMatrix, positionError, angleError] = obtainMotionMatrices(self, startPose, endPose, numNodes, obj) % Uses RRT* to avoid inputted objects
+        function [qMatrix, sendQMatrix, velMatrix, trMatrix, poseMatrix, coordMatrix, positionError, angleError, m] = obtainMotionMatrices(self, startPose, endPose, numNodes, obj) % Uses RRT* to avoid inputted objects
             % Grabs start pose and end pose for RRT* path planning
             self.startPose = startPose;
             self.endPose = endPose;
@@ -166,7 +166,7 @@ classdef HANSCUTE < handle
             
             % Section below is for RMRC
             [qMatrix, trMatrix, poseMatrix] = obtainPoseJointMatrices(self, coordMatrix, numWayPoints);
-            [sendQMatrix, velMatrix, positionError, angleError] = obtainVelocityMatrix(self, qMatrix, trMatrix);
+            [sendQMatrix, velMatrix, positionError, angleError, m] = obtainVelocityMatrix(self, qMatrix, trMatrix);
                         
         end
         
@@ -222,14 +222,14 @@ classdef HANSCUTE < handle
                 end
         end
         
-        function [sendQMatrix, velMatrix, positionError, angleError] = obtainVelocityMatrix(self,qMatrix, trMatrix)
+        function [sendQMatrix, velMatrix, positionError, angleError, m] = obtainVelocityMatrix(self,qMatrix, trMatrix)
             T = trMatrix(:,:,1);
             q0 = self.qStart;
             
             epsilon = 0.1;
             W = diag([1 1 1 0.1 0.1 0.1]);
             lambdaMax = 5e-2;
-            deltaT = 0.05;
+            deltaT = 0.08;              % 0.06 < deltaT < 0.1
             positionError = zeros(3, size(qMatrix,1));
             angleError = zeros(3, size(qMatrix,1));
             
@@ -237,19 +237,16 @@ classdef HANSCUTE < handle
             velMatrix = zeros(size(qMatrix,1), 7);
             sendQMatrix(1,:) = self.model.ikcon(T,q0);
             
-            %velMatrix(1,:) = qMatrix(1, :);
-            error = nan(6, size(qMatrix, 1));
-            
             for i = 1:size(qMatrix,1)-1
                 T = self.model.fkine(sendQMatrix(i,:));
                 deltaX = trMatrix(1:3,4,i+1) - T(1:3,4);    % Calculates the position error
                 Rd = trMatrix(1:3,1:3,i+1);
                 Ra = T(1:3,1:3);
-                Rdot = (1/deltaT)*(Rd-Ra);
+                Rdot = (Rd-Ra)/deltaT;
                 S = Rdot*Ra';
                 
-                linear_velocity = (1/deltaT)*deltaX;
-                angular_velocity = [S(3,2);S(1,3);S(2,1)]; %vex(S)
+                linear_velocity = deltaX/deltaT;
+                angular_velocity = vex(S); %[S(3,2);S(1,3);S(2,1)]; 
                 deltaTheta = tr2rpy(Rd*Ra');
                 xdot = W*[linear_velocity;angular_velocity]; %nu
                 J = self.model.jacob0(sendQMatrix(i,:));
@@ -260,7 +257,7 @@ classdef HANSCUTE < handle
                 else
                     lambda = 0;
                 end
-                invJ = inv(J'*J + lambda *eye(7))*J';
+                invJ = pinv(J'*J + lambda *eye(7))*J';
                 qdot(i,:) = (invJ*xdot)'; 
                 
                 for j = 1:7
