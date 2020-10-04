@@ -279,6 +279,89 @@ classdef HANSCUTE < handle
     end
     
     methods (Static)
+        function initROSConnection()
+           rosshutdown
+           ipHANS = 'http://10.42.0.1:11311';
+           rosinit(ipHANS);
+        end
+        
+        function currentJoint = obtainCurrentJointStates()
+            jointStateTopic = '/joint_states';
+            jointStateMsgType = 'sensor_msgs/JointState';
+            jointStateSub = rossubscriber(jointStateTopic, jointStateMsgType);
+            receive(jointStateSub,10);
+            currentJoint = jointStateSub.LatestMessage.Position';
+        end
+        
+        function clawStateSub = obtainCurrentClawStateSub()
+           clawStateTopic = '/claw_controller/state';
+           clawStateMsgType = 'dynamixel_msgs/JointState';
+           clawStateSub = rossubscriber(clawStateTopic, clawStateMsgType);
+        end
+        
+        function [armControllerPub, armControllerMsg, clawControllerPub, clawControllerMsg] = setupHansPublisher()
+           jointStateNames = ["joint1", "joint2", "joint3", "joint4", "joint5", "joint6", "joint7"];
+           armControllerTopic = 'cute_arm_controller/command';
+           armControllerMsgType = 'trajectory_msgs/JointTrajectory';
+           armControllerMsg = rosmessage(armControllerMsgType);
+           armControllerMsg.JointNames = jointStateNames;
+           armControllerPub = rospublisher(armControllerTopic, armControllerMsgType);
+           steps = 100;
+           
+           for i = 1:steps
+               armControllerTrajPoint = rosmessage('trajectory_msgs/JointTrajectoryPoint');
+               armControllerMsg.Points = [armControllerMsg.Points; armControllerTrajPoint];
+           end
+           
+           clawControllerTopic = '/claw_controller/command';
+           clawControllerMsgType = 'std_msgs/Float64';
+           clawControllerMsg = rosmessage(clawControllerMsgType);
+           clawControllerPub = rospublisher(clawControllerTopic, clawControllerMsgType);
+           
+        end
+        
+        function moveClaw(val, clawControllerPub, clawControllerMsg)
+            clawControllerMsg.Data = val;
+            send(clawControllerPub,clawControllerMsg);
+        end
+        
+        function moveArm(qMatrix, velMatrix, armControllerPub, armControllerMsg)
+            time = 4.0;
+            deltaT = time/steps; %seconds
+            deltaT_msec = deltaT*(1000); %milliSeconds
+            deltaT_Nsec = deltaT_msec*(1000000); %nanoSeconds
+            pointCounter = 1;
+            secCounter = 0;
+            nSecCounter = 0;
+            
+            for i = 1:size(qMatrix,1)
+                if i == size(qMatrix, 1)
+                    break;
+                end
+                
+                velocityMatrix(i,:) = (qMatrix(i+1,:) - qMatrix(i,:))/deltaT;
+                armControllerMsg.Points(pointCounter,1).Positions = qMatrix(i, :);
+                armControllerMsg.Points(pointCounter,1).Velocities = velocityMatrix(i, :);
+                armControllerMsg.Points(pointCounter,1).TimeFromStart.Sec = secCounter;
+                armControllerMsg.Points(pointCounter,1).TimeFromStart.Nsec = nSecCounter;
+                pointCounter = mod(i,steps+1);
+                nSecCounter = nSecCounter + deltaT_Nsec;
+                
+                if nSecCounter >= 1e+09
+                    nSecCounter = 0;
+                    secCounter = secCounter + 1;
+                end
+                
+                if pointCounter == 0
+                    send(armControllerPub, armControllerMsg);
+                    armControllerSub = rossubscriber(armControllerTopic);
+                    receive(armControllerSub,10);
+                    pointCounter = 1;
+                    pause(time);
+                    display('100 steps')
+                end
+            end
+        end
         
     end
 end
