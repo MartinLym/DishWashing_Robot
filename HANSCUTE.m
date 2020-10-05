@@ -23,11 +23,11 @@ classdef HANSCUTE < handle
             qlimH = [-2.5, 2.5];
             qlimV = [-1.8, 1.8];
             
-            L1 = Link('d', 0.0872,'a', 0,'alpha', pi/2,'offset', 0,'qlim', qlimH);
-            L2 = Link('d', 0,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimV); %qlimV
-            L3 = Link('d', 0.0768,'a', 0,'alpha', pi/2,'offset',0,'qlim', qlimH); %qlimH
-            L4 = Link('d', 0,'a', 0.0488,'alpha', pi/2,'offset', pi/2,'qlim', qlimV);
-            L5 = Link('d', 0,'a', 0.0663,'alpha', -pi/2,'offset', 0,'qlim', qlimV);
+            L1 = Link('d', 0.0872,'a', 0,'alpha', -pi/2,'offset', 0,'qlim', qlimH);
+            L2 = Link('d', 0,'a', 0,'alpha', pi/2,'offset', 0,'qlim', qlimV); %qlimV
+            L3 = Link('d', 0.0768,'a', 0,'alpha', -pi/2,'offset',0,'qlim', qlimH); %qlimH
+            L4 = Link('d', 0,'a', 0.0488,'alpha', -pi/2,'offset', -pi/2,'qlim', qlimV);
+            L5 = Link('d', 0,'a', 0.0663,'alpha', pi/2,'offset', 0,'qlim', qlimV);
             L6 = Link('d', 0,'a', 0,'alpha', pi/2,'offset', pi/2,'qlim',qlimV); %qlimV
             L7 = Link('d', 0.055,'a', 0,'alpha', 0,'offset', pi/2,'qlim', qlimH); %rotate offset by -pi/2
             
@@ -82,7 +82,7 @@ classdef HANSCUTE < handle
         
         function [qMatrix, sendQMatrix, velMatrix, trMatrix, poseMatrix, coordMatrix, positionError, angleError, m] = obtainMotionMatrices(self, startPose, endPose, numNodes, obj) % Uses RRT* to avoid inputted objects
             % Grabs start pose and end pose for RRT* path planning
-            self.startPose = startPose;
+            self.startPose = startPose
             self.endPose = endPose;
             self.qStart = self.model.ikcon(startPose, self.model.getpos);
             self.qEnd = self.model.ikcon(endPose);
@@ -325,8 +325,9 @@ classdef HANSCUTE < handle
             send(clawControllerPub,clawControllerMsg);
         end
         
-        function moveArm(qMatrix, velMatrix, armControllerPub, armControllerMsg)
-            time = 4.0;
+        function moveArm(qMatrix, armControllerPub, armControllerMsg)
+            time = 2;
+            steps = 100;
             deltaT = time/steps; %seconds
             deltaT_msec = deltaT*(1000); %milliSeconds
             deltaT_Nsec = deltaT_msec*(1000000); %nanoSeconds
@@ -354,8 +355,8 @@ classdef HANSCUTE < handle
                 
                 if pointCounter == 0
                     send(armControllerPub, armControllerMsg);
-                    armControllerSub = rossubscriber(armControllerTopic);
-                    receive(armControllerSub,10);
+                    armControllerSub = rossubscriber('cute_arm_controller/command');
+                    %receive(armControllerSub,20);
                     pointCounter = 1;
                     pause(time);
                     display('100 steps')
