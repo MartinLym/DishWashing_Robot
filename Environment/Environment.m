@@ -5,11 +5,12 @@ classdef Environment
     properties
         % Defines object appearance and pose
         pose;
+        nPose = zeros(4,4,2);
         vertexCount;
         midPoint;
         verts;
-        mesh_h; 
-        
+        mesh_h;
+                
         % Defines object 
         centrePt;
         objEnvironment;
@@ -41,43 +42,19 @@ classdef Environment
             field2 = 'faces'; 
             field3 = 'faceNormals';
             self.objEnvironment = struct(field1, vertex, field2, faces, field3, faceNormals);
-                        
-        end
-        
-        function Sponge(self)
-            % load brick
-            [FaceData,VertexData,data] = plyread('sponge2.ply','tri');
             
-            % Get vertex count
-            self.vertexCount = size(VertexData,1);
-            
-            % Move center point to origin
-            self.midPoint = sum(VertexData)/self.vertexCount;
-            self.verts = VertexData - repmat(self.midPoint,self.vertexCount,1);
-            
-            % Create a transform to describe the location (at the origin, since it's centered
-            self.pose = eye(4);
-            
-            % Scale the colours to be 0-to-1 (they are originally 0-to-255
-            brickVertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
-            
-            self.mesh = trisurf(FaceData,self.verts(:,1),self.verts(:,2), self.verts(:,3) ...
-            ,'FaceVertexCData',brickVertexColours,'EdgeColor','interp','EdgeLighting','flat');                        
-        end
-        
-        function MoveSponge(self,newPose)
-            self.pose = newPose;
-            
-            % transform the vertices
-            updatedPoints = [self.pose*[self.verts,ones(self.vertexCount,1)]']';
-            
-            % update the mesh vertices in the patch handle
-            self.mesh.Vertices = updatedPoints(:,1:3);
-            
-            drawnow();
-        end
-        
-        %% end of functions
+            distanceBase2Obj = distance_2d([0;0;0], self.pose(1:3,4))
+            nPoseX = ((distanceBase2Obj-(side/2)) / distanceBase2Obj) * self.pose(1,4);
+            nPoseY = ((distanceBase2Obj-(side/2)) / distanceBase2Obj) * self.pose(2,4);
+            nPoseZ = self.pose(3,4);
+            thetaZ = atan2(posY,posX);
+            self.nPose(:,:,2) = makehgtform('translate', [nPoseX, nPoseY, nPoseZ]) * trotz(thetaZ + pi/2) * trotx(pi/2);
+            self.nPose(:,:,1) =  self.nPose(:,:,2) * transl(0,0,-0.1) * trotx(pi/2);
+        end        
+             
     end
 end
 
+function d = distance_2d(q1,q2)
+d = sqrt((q1(1)-q2(1))^2 + (q1(2)-q2(2))^2);
+end
