@@ -94,14 +94,14 @@ classdef HANSCUTE < handle
             q_conf.parent = 0;
             q_goal.coord = endCoord;
             q_goal.cost = 0;
-            stepSize = 0.04; % Placement of next node radius size
+            stepSize = 0.03; % Placement of next node radius size
             
             node(1) = q_conf; 
             numOfObj = numel(obj); % used to iterate through the number of objects
             
             % Section below for the bounds of the rrt* points within the
             % workspace
-            x_min = min(self.pointCloud(:,1));
+            x_min = 0;                         % Changed to 0 from min(self.pointCloud(:,1)) this would confine the workspace of RRT
             x_max = max(self.pointCloud(:,1));
             y_min = min(self.pointCloud(:,2));
             y_max = max(self.pointCloud(:,2));
@@ -127,7 +127,7 @@ classdef HANSCUTE < handle
                    % section below checks the new node for any neighbour
                    % nodes to connect to
                    q_nearest = [];
-                   r = 0.05; % <----- radius to search for nearest neighbour nodes
+                   r = 0.06; % <----- radius to search for nearest neighbour nodes
                    neighbor_count = 1;
                    for j = 1:1:length(node)
                        if (dist_3d(node(j).coord, q_new.coord)) <= r
@@ -390,7 +390,7 @@ end
 
 function [q_near, q_rand, val] = getNearNode(node, x_min, x_max, y_min, y_max, z_min, z_max) 
     % section below chooses a random point within the bounds
-    xRand = x_min + (x_max + x_max) * rand(1);
+    xRand = (x_max - x_min).*rand(1);%x_min + (x_max + x_max) * rand(1);
     yRand = y_min + (y_max + y_max) * rand(1);
     zRand = (z_max - z_min).*rand(1);
     q_rand = [xRand yRand zRand];
