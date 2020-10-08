@@ -6,7 +6,9 @@ classdef RobotControl
         sponge;
         plate;       
         stack;
-        sink;        
+        sink; 
+        
+        retreat;
     end
     
     methods
@@ -154,6 +156,17 @@ classdef RobotControl
                     self.sponge.MoveSponge(trSponge);
                 end
             end
+        end
+        
+        
+        %% VISUAL SERVOING
+        
+        function RetreatVS(self)
+            self.retreat.SetPointsVS();
+            self.retreat.InitialiseVS();
+            self.retreat.PlotPointsVS();
+            self.retreat.AnimateVS();
+            % then can just do set points, plot and animate
         end
         
         %% GUI
