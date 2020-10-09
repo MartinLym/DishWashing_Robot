@@ -1,7 +1,9 @@
 robot = HANSCUTE();
 %%
-qStart = [-1.7 0.1779 -0.6378 1.7094 -0.3737 1.4760 -0.0108];
-qGoal = [-1.4697 -0.2541 -0.5878 1.7454 -0.6257 1.8 -0.1108];%[-0.8 0.1779 -0.6378 1.7094 -0.3737 1.4760 -0.0108];%
+qStart = [-1.5 1.404 -1.55 0.108 0.252 1.404 0];%[-1.7 0.1779 -0.6378 1.7094 -0.3737 1.4760 -0.0108];
+
+qGoal = [-1 1.404 -1.55 0.108 0.252 1.404 0];
+%%[-0.8 0.1779 -0.6378 1.7094 -0.3737 1.4760 -0.0108];%
 
 figure(1)
 robot.model.teach(qStart);
@@ -36,7 +38,7 @@ for i = 1:steps-1
     dq = qMatrix(i+1,:) - qMatrix(i,:); %obtain q joint difference 
     dqMax = max(dq);
     dqMin = min(dq);
-    TrDotMax = (TrMatrix(:,:,i+1) - TrMatrix(:,:,i))/dqMax; % find pose difference then divide by max joint difference
+    TrDotMax = (TrMatrix(:,:,i+1) - TrMatrix(:,:,i))/deltaT; % find pose difference then divide by max joint difference
     TrDotMin = (TrMatrix(:,:,i+1) - TrMatrix(:,:,i))/dqMin;
     
     dRDotMax = TrDotMax(1:3,1:3); % obtain rotation matrix from pose difference

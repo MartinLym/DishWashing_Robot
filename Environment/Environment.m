@@ -48,21 +48,34 @@ classdef Environment
             nPoseY = ((distanceBase2Obj-(side/2)) / distanceBase2Obj) * self.pose(2,4);
             nPoseZ = self.pose(3,4);
             thetaZ = atan2(posY,posX);
-            self.nPose(:,:,1) = makehgtform('translate', [nPoseX, nPoseY, nPoseZ]) * trotz(thetaZ + pi/2) * trotx(pi);%* transl(0,0.05,0)
+            self.nPose(:,:,1) = makehgtform('translate', [nPoseX, nPoseY, nPoseZ]) * trotz(thetaZ + pi/2) * trotx(pi);
             self.nPose(:,:,2) = self.nPose(:,:,1);
             self.nPose(:,:,3) = self.nPose(:,:,2);
         end
         
         function wayPointTransform = pickUpPlate(self) % 3 Waypoints
             wayPointTransform = zeros(4,4,3);
-            self.nPose(:,:,1) = self.nPose(:,:,1) * transl(0,-0.1,0);
-            self.nPose(:,:,2) = self.nPose(:,:,1) * trotx(-pi/2) * transl(0, -0.05, 0.09);
-            self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0, 0, 0.05)
+            self.nPose(:,:,1) = self.nPose(:,:,1) * transl(0,-0.15,0);
+            self.nPose(:,:,2) = self.nPose(:,:,1) * trotx(-pi/2) * transl(0, -0.02, 0.1);
+            self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0, 0.02, 0.05) * trotx(-0.2)
             
             for i = 1:size(wayPointTransform,3)
                 wayPointTransform(:,:,i) = self.nPose(:,:,i);
             end
         end
+        
+        function wayPointTransform = dropPlate(self, robot) % 3 Waypoints
+            wayPointTransform = zeros(4,4,3);
+            
+            self.nPose(:,:,1) = robot.model.fkine(robot.model.getpos);
+            self.nPose(:,:,1) = self.nPose(:,:,1) * troty(pi/2) * transl(0.08, 0, 0.02);
+            %self.nPose(:,:,2) = self.nPose(:,:,1) * trotx(-pi/2) * transl(0, -0.02, 0.1);
+            %self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0, 0.02, 0.05) * trotx(-0.2)
+            wayPointTransform = self.nPose(:,:,1);
+            %for i = 1:size(wayPointTransform,3)
+            %    wayPointTransform(:,:,i) = self.nPose(:,:,i);
+            %end
+        end 
              
     end
 end

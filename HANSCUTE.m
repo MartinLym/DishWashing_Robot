@@ -105,7 +105,7 @@ classdef HANSCUTE < handle
             x_max = max(self.pointCloud(:,1));
             y_min = min(self.pointCloud(:,2));
             y_max = max(self.pointCloud(:,2));
-            z_min = min(self.pointCloud(:,3));
+            z_min = 0;%min(self.pointCloud(:,3));
             %display(z_min)
             z_max = max(self.pointCloud(:,3));
             
