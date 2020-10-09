@@ -5,7 +5,7 @@ classdef Environment
     properties
         % Defines object appearance and pose
         pose;
-        nPose = zeros(4,4,2);
+        nPose = zeros(4,4,3);
         vertexCount;
         midPoint;
         verts;
@@ -48,9 +48,21 @@ classdef Environment
             nPoseY = ((distanceBase2Obj-(side/2)) / distanceBase2Obj) * self.pose(2,4);
             nPoseZ = self.pose(3,4);
             thetaZ = atan2(posY,posX);
-            self.nPose(:,:,2) = makehgtform('translate', [nPoseX, nPoseY, nPoseZ]) * trotz(thetaZ + pi/2) * trotx(pi/2);
-            self.nPose(:,:,1) =  self.nPose(:,:,2) * transl(0,0,-0.1) * trotx(pi/2);
-        end        
+            self.nPose(:,:,1) = makehgtform('translate', [nPoseX, nPoseY, nPoseZ]) * trotz(thetaZ + pi/2) * trotx(pi);%* transl(0,0.05,0)
+            self.nPose(:,:,2) = self.nPose(:,:,1);
+            self.nPose(:,:,3) = self.nPose(:,:,2);
+        end
+        
+        function wayPointTransform = pickUpPlate(self) % 3 Waypoints
+            wayPointTransform = zeros(4,4,3);
+            self.nPose(:,:,1) = self.nPose(:,:,1) * transl(0,-0.1,0);
+            self.nPose(:,:,2) = self.nPose(:,:,1) * trotx(-pi/2) * transl(0, -0.05, 0.09);
+            self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0, 0, 0.05)
+            
+            for i = 1:size(wayPointTransform,3)
+                wayPointTransform(:,:,i) = self.nPose(:,:,i);
+            end
+        end
              
     end
 end

@@ -30,7 +30,7 @@ Tc0 = robot.model.fkine(robot.model.getpos);
 cam.T = Tc0;
 cam.plot_camera('Tcam', Tc0, 'scale',0.05)
 
-spheres = plot_sphere(P, 0.0075, 'b');
+plot_sphere(P, 0.0075, 'b');
 %plot_sphere(PP, 0.0075, 'r');
 lighting gouraud
 light

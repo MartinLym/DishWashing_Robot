@@ -85,7 +85,7 @@ classdef HANSCUTE < handle
             self.startPose = startPose
             self.endPose = endPose;
             self.qStart = self.model.ikcon(startPose, self.model.getpos);
-            self.qEnd = self.model.ikcon(endPose);
+            self.qEnd = self.model.ikcon(endPose, self.model.getpos);
             
             startCoord = self.startPose(1:3, 4)';
             endCoord = self.endPose(1:3, 4)';
@@ -106,6 +106,7 @@ classdef HANSCUTE < handle
             y_min = min(self.pointCloud(:,2));
             y_max = max(self.pointCloud(:,2));
             z_min = min(self.pointCloud(:,3));
+            %display(z_min)
             z_max = max(self.pointCloud(:,3));
             
             for i = 1:1:numNodes
@@ -127,7 +128,7 @@ classdef HANSCUTE < handle
                    % section below checks the new node for any neighbour
                    % nodes to connect to
                    q_nearest = [];
-                   r = 0.06; % <----- radius to search for nearest neighbour nodes
+                   r = 0.05; % <----- radius to search for nearest neighbour nodes
                    neighbor_count = 1;
                    for j = 1:1:length(node)
                        if (dist_3d(node(j).coord, q_new.coord)) <= r
@@ -306,12 +307,12 @@ classdef HANSCUTE < handle
            armControllerMsg = rosmessage(armControllerMsgType);
            armControllerMsg.JointNames = jointStateNames;
            armControllerPub = rospublisher(armControllerTopic, armControllerMsgType);
-           steps = 100;
+           steps = 1;
            
-           for i = 1:steps
+           %for i = 1:steps
                armControllerTrajPoint = rosmessage('trajectory_msgs/JointTrajectoryPoint');
                armControllerMsg.Points = [armControllerMsg.Points; armControllerTrajPoint];
-           end
+           %end
            
            clawControllerTopic = '/claw_controller/command';
            clawControllerMsgType = 'std_msgs/Float64';
