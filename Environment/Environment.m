@@ -53,29 +53,41 @@ classdef Environment
             self.nPose(:,:,3) = self.nPose(:,:,2);
         end
         
-        function wayPointTransform = pickUpPlate(self) % 3 Waypoints
-            wayPointTransform = zeros(4,4,3);
+        function wayPointPoses = pickUpPlate(self) % 3 Waypoints
+            wayPointPoses = zeros(4,4,3);
             self.nPose(:,:,1) = self.nPose(:,:,1) * transl(0,-0.15,0);
             self.nPose(:,:,2) = self.nPose(:,:,1) * trotx(-pi/2) * transl(0, -0.02, 0.1);
             self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0, 0.02, 0.05) * trotx(-0.2)
             
-            for i = 1:size(wayPointTransform,3)
-                wayPointTransform(:,:,i) = self.nPose(:,:,i);
+            for i = 1:size(wayPointPoses,3)
+                wayPointPoses(:,:,i) = self.nPose(:,:,i);
             end
         end
         
-        function wayPointTransform = dropPlate(self, robot) % 3 Waypoints
-            wayPointTransform = zeros(4,4,3);
+        function wayPointPoses = dropPlate(self, robot) % 3 Waypoints
+            wayPointPoses = zeros(4,4,3);
             
             self.nPose(:,:,1) = robot.model.fkine(robot.model.getpos);
-            self.nPose(:,:,1) = self.nPose(:,:,1) * troty(pi/2) * transl(0.08, 0, 0.02);
-            %self.nPose(:,:,2) = self.nPose(:,:,1) * trotx(-pi/2) * transl(0, -0.02, 0.1);
-            %self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0, 0.02, 0.05) * trotx(-0.2)
-            wayPointTransform = self.nPose(:,:,1);
-            %for i = 1:size(wayPointTransform,3)
-            %    wayPointTransform(:,:,i) = self.nPose(:,:,i);
-            %end
-        end 
+            self.nPose(:,:,1) = self.nPose(:,:,1) * troty(pi/3) * transl(0.03, 0, 0.03) ;
+            self.nPose(:,:,2) = self.nPose(:,:,1) * troty(pi/4) * transl(0.03, 0, 0.03);
+            self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0.03, -0.05, -0.11);
+            
+            for i = 1:size(wayPointPoses,3)
+                wayPointPoses(:,:,i) = self.nPose(:,:,i);
+            end
+        end
+        
+        function wayPointPoses = pickUpSponge(self, robot)
+            wayPointPoses = zeros(4,4,3);
+            
+            self.nPose(:,:,1) = self.nPose(:,:,1) * transl(0,0,-0.02);
+            self.nPose(:,:,2) = self.nPose(:,:,2) * trotz(pi/2);
+            self.nPose(:,:,3) = self.nPose(:,:,3);
+            
+            for i = 1:size(wayPointPoses,3)
+                wayPointPoses(:,:,i) = self.nPose(:,:,i);
+            end
+        end
              
     end
 end

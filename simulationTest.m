@@ -4,6 +4,7 @@ robot = HANSCUTE();
 
 q0 = [-0.1427 1.3761 -0.0430 0.7179 -0.0828 1.08 -0.1546];
 qStart = [-0.1427 0.9081 -0.0430 0.7179 -0.0828 1.4760 -0.1546];
+qSponge = [-0.9066 0.9143 -0.0399 0.6765 -0.0767 1.4788 0.0230];
 robot.model.teach(q0);
 hold on
 
@@ -11,7 +12,8 @@ show = false; % show = true to display the object for object collision size
 diameter = 0.2;
 height = 0.11;
 % section below for defining objects in the workspace
-obj(1) = Environment(0.25, -0.25,0.05, 'plate3.ply', show, diameter, height);
+obj(1) = Environment(0.25, -0.25,0.011, 'plate3.ply', show, diameter, height);
+obj(2) = Environment(0.025, -0.15, 0.011, 'brick9.ply', true, 0.05, 0.05);
 %%
 qCurrent = q0;
 startPose = robot.model.fkine(qCurrent);
@@ -21,12 +23,6 @@ moveRobot(robot, qMatrix, trMatrix);
 
 %%
 wayPoint = obj(1).pickUpPlate();
-for i = 1:size(wayPoint,3)
-    trplot(wayPoint(:,:,i), 'frame', i, 'color', 'b', 'length',0.1);
-    P = mkgrid(2,0.02,wayPoint(i));
-    plot_sphere(P, 0.0075, 'b');
-end
-%%
 startPose = robot.model.fkine(robot.model.getpos); 
 endPose = wayPoint(:,:,1); %pointTransform
 [qMatrix, sendQMatrix, velMatrix, trMatrix, poseMatrix, coordMatrix, positionError, angleError, m] = robot.obtainMotionMatrices(startPose, endPose, 1500, obj);
@@ -54,15 +50,57 @@ end
 moveRobot(robot, qMatrix, trMatrix);
 %%
 wayPoint = obj(1).dropPlate(robot);
-trplot(wayPoint(:,:,1), 'frame', i, 'color', 'r', 'length',0.1);
-
+qReset = [-0.7531 1.2372 0.0452 1.0415 0.0870 -0.6892 0.0219];
 %%
-qCurrent = robot.model.getpos;
-startPose = robot.model.fkine(qCurrent);
-endPose = wayPoint(:,:,1);
+q0 = robot.model.getpos;
+q= [];
+qMatrix = [];
+steps = 100;
+for i = 1:size(wayPoint,3)
+    [qEnd, err, flag] = robot.model.ikcon(wayPoint(:,:,i), q0);
+    s = lspb(0,1,steps);
+    for j = 1:steps
+        q(j,:) = (1-s(j)) * q0 + s(j) * qEnd;
+    end
+    qMatrix = [qMatrix;q];
+    q0 = q(end,:);
+end
+
+trMatrix = zeros(4, 4, size(qMatrix,1));
+for i = 1:size(qMatrix,1)
+    trMatrix(:,:,i) = robot.model.fkine(qMatrix(i,:));
+end
+moveRobot(robot, qMatrix, trMatrix);
+%%
+startPose = robot.model.fkine(robot.model.getpos);
+endPose = robot.model.fkine(qSponge);
 [qMatrix, sendQMatrix, velMatrix, trMatrix, poseMatrix, coordMatrix, positionError, angleError, m] = robot.obtainMotionMatrices(startPose, endPose, 1500, obj);
 moveRobot(robot, qMatrix, trMatrix);
+%% Pick Up Sponge
+wayPoint = obj(2).pickUpSponge(robot);
+for i = 1:size(wayPoint,3)
+    trplot(wayPoint(:,:,i), 'frame', i, 'color', 'r', 'length',0.1);
+end
 
+q0 = robot.model.getpos;
+q= [];
+qMatrix = [];
+steps = 100;
+for i = 1:size(wayPoint,3)
+    [qEnd, err, flag] = robot.model.ikcon(wayPoint(:,:,i), q0)
+    s = lspb(0,1,steps);
+    for j = 1:steps
+        q(j,:) = (1-s(j)) * q0 + s(j) * qEnd;
+    end
+    qMatrix = [qMatrix;q];
+    q0 = q(end,:);
+end
+
+trMatrix = zeros(4, 4, size(qMatrix,1));
+for i = 1:size(qMatrix,1)
+    trMatrix(:,:,i) = robot.model.fkine(qMatrix(i,:));
+end
+moveRobot(robot, qMatrix, trMatrix);
 %%
 function moveRobot(robot, qMatrix, trMatrix)
     epsilon = 0.1;
