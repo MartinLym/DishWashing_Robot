@@ -1,14 +1,13 @@
 classdef RobotControl
+    %% Main class for GUI
     
     properties
         robot;
-
         sponge;
-        plate;       
-        stack;
-        sink; 
+        plate;
+        enviro;
         
-        retreat;
+        retreat
     end
     
     methods
@@ -16,71 +15,79 @@ classdef RobotControl
         
         function self = RobotControl()
             disp('Initialising robot and environment...');
-            self.robot = HANSCUTE();
+            
+            % insert robot
+            self.robot = HansCute();
             hold on;
+            self.retreat = RobotRetreat();
+            
+            
+            % insert environment
             self.sponge = Sponge();
             self.plate = Plate();
-            camlight;
             
-            self.sponge.MoveSponge(transl(0.1,0.07,0)*trotx(pi));
-            self.plate.MovePlate(transl(-0.02,0.22,0)*trotx(pi));
+            show = false;
+            self.enviro = Environment(-0.02,0.14,-0.045,'dirtyplates.ply', show, 0.13, 0.18);
+            self.enviro = Environment(-0.02,-0.15,-0.045,'cleanplates.ply', show, 0.13, 0.18);
+            self.enviro = Environment(0,0.06,-0.28,'sinknbarrier.ply', show, 0.9, 0.77);
+            %camlight;
             
-            self.stack = Environment(-0.02,0.22,-0.1, 'stackedplates.ply', false, 0.21, 0.14);
-            self.sink = Environment(0,-0.06,-0.32, 'sink.ply', false, 0.58, 0.5);
+            % set initial positions
+            %qStart = deg2rad([-81,0,-143,30.9,47.4,49,0]);
+            qStart = ([0,0,0,0,0,0,0]);
+            self.robot.model.animate(qStart);
+            self.sponge.MoveSponge(transl(0.15,0.07,0.04)*trotx(pi));
+            self.plate.MovePlate(transl(-0.02,0.14,0.075)*trotx(pi));
+            
         end
         
         %% Run simulation
         
         function SimulateRobot(self)
-            qStart = deg2rad([-90,0,180,26.8,0,63.2,0]);
+            qStart = self.robot.model.getpos();
+            qReset = ([0,0,0,0,0,0,0]);
             startPose = self.robot.model.fkine(qStart);
+            trReset = self.robot.model.fkine(qReset);
             
             % set dishwashing locations
-            trDirty = transl(-0.02,0.22,0)*trotx(pi);
-            trRack = transl(-0.15,0,0)*trotx(pi);
-            trSponge = transl(0.1,0.07,0)*trotx(pi);
-            trScrub  = transl(-0.15,0,0.01)*trotx(pi);
-            trClean = transl(-0.02,-0.22,0)*trotx(pi);
+            trRack = transl(-0.15,0,0.04)*trotx(pi);
+            trSponge = transl(0.1,0.05,0.04)*trotx(pi);
+            trScrub  = transl(-0.15,0,0.05)*trotx(pi);
+            trClean = transl(-0.02,-0.15,0.075)*trotx(pi);
             
+            % dishwashing simulation
             disp('Grabbing plate...')
-            [qMatrix1, velMatrix1, trMatrix1, poseMatrix1, coordMatrix1] = ...
-                self.robot.obtainMotionMatrices(startPose,self.plate.pose,1500,self.sink);
+            [qMatrix1] = self.robot.ObtainMotionMatrices(startPose,self.plate.pose,1500,self.enviro);
             self.AnimateRobot(qMatrix1,false,false); % start to dirty
             
-            [qMatrix2, velMatrix2, trMatrix2, poseMatrix2, coordMatrix2] = ...
-                self.robot.obtainMotionMatrices(self.plate.pose,trRack,1500,self.sink);
+            [qMatrix2] = self.robot.ObtainMotionMatrices(self.plate.pose,trRack,1500,self.enviro);
             self.AnimateRobot(qMatrix2,false,true); % dirty to rack
             
-            disp('Cleaning plate...')
-            [qMatrix3, velMatrix3, trMatrix3, poseMatrix3, coordMatrix3] = ...
-                self.robot.obtainMotionMatrices(trRack,self.sponge.pose,1500,self.sink);
+            disp('Grabbing sponge...')
+            [qMatrix3]=self.robot.ObtainMotionMatrices(trRack,self.sponge.pose,1500,self.enviro);
             self.AnimateRobot(qMatrix3,false,false); % rack to sponge
             
-            [qMatrix4, velMatrix4, trMatrix4, poseMatrix4, coordMatrix4] = ...
-                self.robot.obtainMotionMatrices(self.sponge.pose,trScrub,1500,self.sink);
+            [qMatrix4]=self.robot.ObtainMotionMatrices(self.sponge.pose,trScrub,1500,self.enviro);
             self.AnimateRobot(qMatrix4,true,false); % sponge to rack
             
+            disp('Cleaning plate...')
             self.Scrub(); % simulate scrubbing
             
             disp('Returning sponge...')
-            [qMatrix5, velMatrix4, trMatrix4, poseMatrix4, coordMatrix4] = ...
-                self.robot.obtainMotionMatrices(self.sponge.pose,trSponge,1500,self.sink);
+            [qMatrix5]=self.robot.ObtainMotionMatrices(self.sponge.pose,trSponge,1500,self.enviro);
             self.AnimateRobot(qMatrix5,true,false); % rack to return sponge
-                    
-            [qMatrix6, velMatrix4, trMatrix4, poseMatrix4, coordMatrix4] = ...
-                self.robot.obtainMotionMatrices(self.sponge.pose,trRack,1500,self.sink);
-            self.AnimateRobot(qMatrix6,false,false); % sponge to rack   
+            
+            [qMatrix6]=self.robot.ObtainMotionMatrices(self.sponge.pose,trRack,1500,self.enviro);
+            self.AnimateRobot(qMatrix6,false,false); % sponge to rack
             
             disp('Putting away clean plate...')
-            [qMatrix7, velMatrix4, trMatrix4, poseMatrix4, coordMatrix4] = ...
-                self.robot.obtainMotionMatrices(trRack,trClean,1500,self.sink);
-            self.AnimateRobot(qMatrix7,false,true); % rack to clean  
+            [qMatrix7]=self.robot.ObtainMotionMatrices(trRack,trClean,1500,self.enviro);
+            self.AnimateRobot(qMatrix7,false,true); % rack to clean
             
             disp('Getting new plate...')
-            [qMatrix8, velMatrix4, trMatrix4, poseMatrix4, coordMatrix4] = ...
-                self.robot.obtainMotionMatrices(trClean,trDirty,1500,self.sink);
+            [qMatrix8]=self.robot.ObtainMotionMatrices(trClean,trReset,1500,self.enviro);
             self.AnimateRobot(qMatrix8,false,false); % rack to clean
-                      
+            
         end
         
         %% Control robot movements (old)
@@ -118,8 +125,9 @@ classdef RobotControl
             pickUpSponge = sMarker;
             pickUpPlate = pMarker;
             
-            for i = 1:10:size(qMatrix, 1)
+            for i = 1:5:size(qMatrix, 1)
                 self.robot.model.animate(qMatrix(i,:));
+                pause(0.1);
                 
                 if pickUpSponge == true
                     trSponge = self.robot.model.fkine(qMatrix(i,:));
@@ -131,6 +139,8 @@ classdef RobotControl
                     self.plate.MovePlate(trPlate);
                 end
             end
+            qCurrent = self.robot.model.getpos();
+            trCurrent = self.robot.model.fkine(qCurrent)
         end
         
         %% Simulate scrubbing plate
@@ -158,14 +168,14 @@ classdef RobotControl
             end
         end
         
-        
-        %% VISUAL SERVOING
+        %% VISUAL SERVOING           
         
         function RetreatVS(self)
             self.retreat.SetPointsVS();
             self.retreat.InitialiseVS();
             self.retreat.PlotPointsVS();
-            self.retreat.AnimateVS();
+            pause(2);
+            self.retreat.AnimateVS();          
             % then can just do set points, plot and animate
         end
         
