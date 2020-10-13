@@ -22,7 +22,7 @@ function varargout = Teach(varargin)
 
 % Edit the above text to modify the response to help Teach
 
-% Last Modified by GUIDE v2.5 09-Oct-2020 00:00:53
+% Last Modified by GUIDE v2.5 10-Oct-2020 12:49:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -618,10 +618,4 @@ function safetybtn_Callback(hObject, eventdata, handles)
 % hObject    handle to safetybtn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-x = 0.3;
-y = 0;
-z = 0.1;
-handles.sim.retreat.SetPointsVS(x,y,z);
-handles.sim.retreat.InitialiseVS();
-handles.sim.retreat.PlotPointsVS();
-handles.sim.retreat.AnimateVS(); 
+handles.sim.RetreatVS();
