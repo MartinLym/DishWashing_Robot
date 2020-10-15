@@ -101,11 +101,11 @@ classdef HANSCUTE < handle
             
             % Section below for the bounds of the rrt* points within the
             % workspace
-            x_min = 0;                         % Changed to 0 from min(self.pointCloud(:,1)) this would confine the workspace of RRT
+            x_min = 0.02;                         % Changed to 0 from min(self.pointCloud(:,1)) this would confine the workspace of RRT
             x_max = max(self.pointCloud(:,1));
             y_min = min(self.pointCloud(:,2));
             y_max = max(self.pointCloud(:,2));
-            z_min = 0;%min(self.pointCloud(:,3));
+            z_min = 0.02;%min(self.pointCloud(:,3));
             %display(z_min)
             z_max = max(self.pointCloud(:,3));
             
@@ -365,8 +365,26 @@ classdef HANSCUTE < handle
             end
         end
         
+        function currentJoints = getRealRobotJoints()
+            jointStateTopic = '/joint_states';
+            jointStateMsgType = 'sensor_msgs/JointState';
+            jointStateSub = rossubscriber(jointStateTopic, jointStateMsgType);
+            receive(jointStateSub,10);
+            flag = true; %size(currentJoints, 2) ~= 8
+            currentJoints = [];
+            while size(currentJoints, 2) ~=8
+                try
+                    currentJoints = jointStateSub.LatestMessage.Position';
+                    flag = false;
+                end
+            end
+            currentJoints = currentJoints(1:7);
+        end
+        
     end
+    
 end
+
 
 function safe = checkCollision(obj, numOfObj, q1Node, q2Node)
     for i = 1:1:numOfObj
