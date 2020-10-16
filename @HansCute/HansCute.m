@@ -17,7 +17,7 @@ classdef HansCute < handle
     methods
         function self = HansCute()
             self.GetCuteRobot();
-            %self.InitCuteRobot();
+            self.InitCuteRobot();
             self.PlotAndColourRobot();
         end
         %%
@@ -350,7 +350,7 @@ coordMatrix = [];
 while q_end.parent ~= 0
     start = q_end.parent;
     coordMatrix = [q_end.coord; coordMatrix];
-    %line([q_end.coord(1), node(start).coord(1)], [q_end.coord(2), node(start).coord(2)], [q_end.coord(3), node(start).coord(3)], 'Color', 'r', 'LineWidth', 4);
+    line([q_end.coord(1), node(start).coord(1)], [q_end.coord(2), node(start).coord(2)], [q_end.coord(3), node(start).coord(3)], 'Color', 'r', 'LineWidth', 4);
     hold on
     q_end = node(start);
     counter = counter + 1;
