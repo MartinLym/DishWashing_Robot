@@ -22,26 +22,21 @@ classdef RobotRetreat < handle
             self.robot = HansCute();
         end
         
-        function SetPointsVS(self,x,y,z)
-%             x = 0.3;
-%             y = 0;
-%             z = 0.1;
-            plate = Plate();
-            plate.MovePlate(transl([x,y,z])*troty(pi/2));
+        function SetPointsVS(self)
+            x = 0.5;
+            y = 0;
+            z = 0.15;
+            Environment(x,y,z,'sign.ply', false, 0.1, 0.1);
+            
+            
+            %plate = Plate();
+            %plate.MovePlate(transl([x,y,z])*troty(pi/2));
 
             %Create 3D points (actual points in figure)          
             self.P=[x,x,x,x; 
                y-0.075,y+0.075,y+0.075,y-0.075; %0.15 away
                 z-0.075,z-0.075,z+0.075,z+0.075]; %0.15 away
-           
-%             self.P=[x,x,x,x;
-%                 y-0.1,y+0.05,y+0.05,y-0.1; %0.15 away
-%                 z-0.05,z-0.05,z+0.1,z+0.1]; %0.15 away
-%             P=[0.3,0.3,0.3,0.3;
-%                 -0.1,0.05,0.05,-0.1;
-%                 0.05,0.05,0.2,0.2];
-
-            disp(self.P)         
+       
         end
         
         function InitialiseVS(self)
@@ -61,13 +56,14 @@ classdef RobotRetreat < handle
             self.lambda = 0.6;
             
             %depth of the IBVS
-            %depth = mean (P(1,:));
-            self.depth = 0.2;
+            self.depth = mean(self.P(1,:));
+            %self.depth = 0.2;
             
             %Display robot
             q0 = [0,0,0,pi/2,0,0,0];
-            self.Tc0= self.robot.model.fkine(q0);
-            self.robot.model.animate(q0);
+            qCurrent = self.robot.model.getpos();
+            self.Tc0= self.robot.model.fkine(q0);           
+            self.robot.model.animate(jtraj(qCurrent,q0,30));
             drawnow
         end
         
@@ -80,7 +76,7 @@ classdef RobotRetreat < handle
             
             % Display points in 3D and the camera
             self.cam.plot_camera('Tcam',self.Tc0, 'label','scale',0.04);
-            plot_sphere(self.P, 0.005, 'b')
+            %plot_sphere(self.P, 0.005, 'b')
             lighting gouraud
             light
             
@@ -105,7 +101,7 @@ classdef RobotRetreat < handle
         function AnimateVS(self)
             %qVS = nan(1,7);
             q0 = [0,0,0,pi/2,0,0,0];
-            for ksteps = 1:20
+            for ksteps = 1:150
                 %ksteps = ksteps + 1;
                 
                 % compute the view of the camera
