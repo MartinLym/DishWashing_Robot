@@ -22,7 +22,7 @@ function varargout = Teach(varargin)
 
 % Edit the above text to modify the response to help Teach
 
-% Last Modified by GUIDE v2.5 10-Oct-2020 12:49:25
+% Last Modified by GUIDE v2.5 16-Oct-2020 14:47:05
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -77,6 +77,7 @@ function varargout = Teach_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
+%% Adjust joint angles
 % --- Executes on slider movement.
 function slider1_Callback(hObject, eventdata, handles)
 % hObject    handle to slider1 (see GCBO)
@@ -317,7 +318,7 @@ end
 
 
 
-
+%% Show dishwashing simulation
 % --- Executes on button press in dish_btn.
 function dish_btn_Callback(hObject, eventdata, handles)
 % hObject    handle to dish_btn (see GCBO)
@@ -490,6 +491,7 @@ end
 
 
 
+%% x,y,z input
 
 function edit_x_Callback(hObject, eventdata, handles)
 % hObject    handle to edit_x (see GCBO)
@@ -570,7 +572,7 @@ zCoord = str2double(get(handles.edit_z,'String'));
 coord = [xCoord,yCoord,zCoord];
 handles.sim.CartesianInput(coord);
 
-
+%% ESTOP
 % --- Executes on button press in estop_btn.
 function estop_btn_Callback(hObject, eventdata, handles)
 % hObject    handle to estop_btn (see GCBO)
@@ -604,18 +606,24 @@ else
     disp('Must disengage ESTOP before resuming dishwashing.');
 end
 
-
-% --- Executes on button press in upbtn.
-function upbtn_Callback(hObject, eventdata, handles)
-% hObject    handle to upbtn (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-z = get(hObject,'Value');
-handles.sim.retreat.SetPointsVS(0,0,z);
-
+%% Visual servoing
 % --- Executes on button press in safetybtn.
 function safetybtn_Callback(hObject, eventdata, handles)
 % hObject    handle to safetybtn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 handles.sim.RetreatVS();
+
+
+% --- Executes on button press in collisionbtn.
+function collisionbtn_Callback(hObject, eventdata, handles)
+% hObject    handle to collisionbtn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.sim.AnimateCollisionAvoidance();
+
+% --- Executes on button press in handbtn.
+function handbtn_Callback(hObject, eventdata, handles)
+% hObject    handle to handbtn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)

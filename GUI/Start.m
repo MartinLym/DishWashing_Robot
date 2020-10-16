@@ -22,7 +22,7 @@ function varargout = Start(varargin)
 
 % Edit the above text to modify the response to help Start
 
-% Last Modified by GUIDE v2.5 20-Sep-2020 15:05:44
+% Last Modified by GUIDE v2.5 16-Oct-2020 14:34:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -73,16 +73,18 @@ function varargout = Start_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
-% --- Executes on button press in washbtn.
-function washbtn_Callback(hObject, eventdata, handles)
-% hObject    handle to washbtn (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
 % --- Executes on button press in start_btn.
 function start_btn_Callback(hObject, eventdata, handles)
 % hObject    handle to start_btn (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+Teach
+close Start
+
+
+% --- Executes on button press in start2.
+function start2_Callback(hObject, eventdata, handles)
+% hObject    handle to start2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 Teach
