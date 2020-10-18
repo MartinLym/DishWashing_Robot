@@ -1,6 +1,6 @@
 classdef Environment
-    % ENVIRONMENT Summary of this class goes here
-    % Detailed explanation goes here
+    % This class creates the object in the environment and obtains its vertex, 
+    % face and face normal for collision detection 
     
     properties
         % Defines object appearance and pose

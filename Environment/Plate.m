@@ -1,5 +1,5 @@
 classdef Plate < handle
-    % This class creates the bricks using plyread and updates brick
+    % This class creates the plate using plyread and updates plate
     % locations.
     
     properties

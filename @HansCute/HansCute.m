@@ -1,6 +1,6 @@
 classdef HansCute < handle
-    %UNTITLED5 Summary of this class goes here
-    %   Detailed explanation goes here
+    % This class generates the 3D model of the robot and uses RRT to plan
+    % the path while detecting and avoiding collisions.
     
     properties
         model;
@@ -15,12 +15,15 @@ classdef HansCute < handle
     end
     
     methods
+        
         function self = HansCute()
             self.GetCuteRobot();
             self.InitCuteRobot();
             self.PlotAndColourRobot();
         end
-        %%
+        
+        %% DEFINE DH PARAMETERS
+        
         function GetCuteRobot(self)
             pause(0.001);
             name = ['bob'];
@@ -37,7 +40,9 @@ classdef HansCute < handle
             
             self.model = SerialLink([L1 L2 L3 L4 L5 L6 L7],'name',name);
         end
-        %%
+        
+        %% BUILD 3D MODEL OF ROBOT
+        
         function PlotAndColourRobot(self)
             for linkIndex = 1:self.model.n
                 [ faceData, vertexData, plyData{linkIndex + 1} ] = plyread(['Link',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>
@@ -64,8 +69,10 @@ classdef HansCute < handle
                 end
             end
         end
-        %%
-        function InitCuteRobot(self) %Used to identify the workspace of the robot
+        
+        %% CALCULATE WORKSPACE OF ROBOT
+        
+        function InitCuteRobot(self)
             disp('Calculating workspace...');
             stepRads = deg2rad(60);
             qlimH = [-2.5, 2.5];
@@ -111,8 +118,9 @@ classdef HansCute < handle
             %plot3(self.pointCloud(:,1), self.pointCloud(:,2), self.pointCloud(:,3), 'r.')
             
         end
-        %%
-        function [qMatrix] = ObtainMotionMatrices(self, startPose, endPose, numNodes, obj) % Uses RRT* to avoid inputted objects
+        %% USES RRT* TO AVOID INPUT OBJECTS
+        
+        function [qMatrix] = ObtainMotionMatrices(self, startPose, endPose, numNodes, obj)
             % Grabs start pose and end pose for RRT* path planning
             self.startPose = startPose;
             self.endPose = endPose;
@@ -131,8 +139,7 @@ classdef HansCute < handle
             node(1) = q_conf;
             numOfObj = numel(obj); % used to iterate through the number of objects
             
-            % Section below for the bounds of the rrt* points within the
-            % workspace
+            % set the bounds of the rrt* points within the workspace
             x_min = min(self.pointCloud(:,1));
             x_max = max(self.pointCloud(:,1));
             y_min = min(self.pointCloud(:,2));
@@ -141,7 +148,7 @@ classdef HansCute < handle
             z_max = max(self.pointCloud(:,3));
             
             for i = 1:1:numNodes
-                [q_near, q_rand, val] = GetNearNode(node, x_min, x_max, y_min, y_max, z_min, z_max);
+                [q_near, q_rand, val] = GetNearNode(node, x_min, x_max, y_min, y_max, z_min, z_max); % finds possible nodes
                 q_new.coord = steer3d(q_rand, q_near.coord, val, stepSize); % obtains a new node
                 
                 q1Node = q_near.coord;
@@ -159,8 +166,9 @@ classdef HansCute < handle
                     % section below checks the new node for any neighbour
                     % nodes to connect to
                     q_nearest = [];
-                    r = 0.05; % <----- radius to search for nearest neighbour nodes
+                    r = 0.05; % radius to search for nearest neighbour nodes
                     neighbor_count = 1;
+                    
                     for j = 1:1:length(node)
                         if (dist_3d(node(j).coord, q_new.coord)) <= r
                             q_nearest(neighbor_count).coord = node(j).coord;
@@ -171,6 +179,7 @@ classdef HansCute < handle
                     
                     q_min = q_near;
                     C_min = q_new.cost;
+                    
                     % Iterates through the nearest neighbour nodes and finds
                     % the closest one
                     for k = 1:1:length(q_nearest)
@@ -201,7 +210,9 @@ classdef HansCute < handle
             [velMatrix, error] = ObtainVelocityMatrix(self, qMatrix, trMatrix);
             
         end
-        %%
+        
+        %% CALCULATES FOR JOINT ANGLES, HOMOG TRANSFORMATION AND POSE MATRICES 
+        
         function [qMatrix, trMatrix, poseMatrix] = ObtainPoseJointMatrices(self, coordMatrix, numWayPoints)
             steps = 100;
             q = [];
@@ -210,6 +221,7 @@ classdef HansCute < handle
             for j = 1:steps
                 q(j,:) = (1-s(j))*self.qStart + s(j)*self.qEnd;
             end
+            
             % Obtain the rotation matrix to change as it moves through
             % the trajectory
             idxCounter = ceil((size(q,1)/numWayPoints));
@@ -253,7 +265,9 @@ classdef HansCute < handle
                 trMatrix(:,:,i) = self.model.fkine(qMatrix(i,:));
             end
         end
-        %%
+        
+        %% CALCULATES FOR JOINT VELOCITIES
+        
         function [velMatrix, error] = ObtainVelocityMatrix(self,qMatrix, trMatrix)
             velMatrix = zeros(size(qMatrix,1), 7);
             %velMatrix(1,:) = qMatrix(1, :);
@@ -286,13 +300,68 @@ classdef HansCute < handle
         
     end
     
-    %%
+    %%  
     methods (Static)
         
     end
+    
 end
 
-%% outside of HANSCUTE class
+%% ------------ outside of HansCute class ------------
+
+%% GETS RANDOM POINT WITHIN BOUNDS AS NODES
+
+function [q_near, q_rand, val] = GetNearNode(node, x_min, x_max, y_min, y_max, z_min, z_max)
+xRand = x_min + (x_max + x_max) * rand(1);
+yRand = y_min + (y_max + y_max) * rand(1);
+zRand = (z_max - z_min).*rand(1);
+q_rand = [xRand yRand zRand];
+%plot3(q_rand(1), q_rand(2), q_rand(3), 'x', 'Color',  'black')
+
+ndist = [];
+for i = 1:1:length(node)
+    n = node(i);
+    tmp = dist_3d(n.coord, q_rand);
+    ndist = [ndist tmp];
+end
+[val, idx] = min(ndist);
+q_near = node(idx);
+end
+
+%% FINDS OPTIMAL PATH
+% This function searches backwards from goal to start to find the optimal least cost path
+
+function [coordMatrix, counter] = GeneratePath(node, q_goal)
+D = [];
+for j = 1:1:length(node)
+    tmpdist = dist_3d(node(j).coord, q_goal.coord);
+    D = [D tmpdist];
+end
+
+[val, idx] = min(D);
+q_final = node(idx);
+q_goal.parent = idx;
+q_end = q_goal;
+node = [node q_goal];
+counter = 0;
+coordMatrix = [];
+
+while q_end.parent ~= 0
+    start = q_end.parent;
+    coordMatrix = [q_end.coord; coordMatrix];
+    line([q_end.coord(1), node(start).coord(1)], [q_end.coord(2), node(start).coord(2)], [q_end.coord(3), node(start).coord(3)], 'Color', 'r', 'LineWidth', 4);
+    hold on
+    q_end = node(start);
+    counter = counter + 1;
+end
+
+end
+
+%% COLLISION DETECTION
+% This functions below is based on lab 5 exercises. The object's vertex,
+% face and face normals are used to check if there is triangle object (collision) between
+% node 1 and node 2
+
 function safe = CheckCollision(obj, numOfObj, q1Node, q2Node)
 for i = 1:1:numOfObj
     faces = obj(i).objEnvironment.faces;
@@ -311,49 +380,6 @@ for i = 1:1:numOfObj
         safe = 1;
     end
     
-end
-end
-
-function [q_near, q_rand, val] = GetNearNode(node, x_min, x_max, y_min, y_max, z_min, z_max)
-% section below chooses a random point within the bounds
-xRand = x_min + (x_max + x_max) * rand(1);
-yRand = y_min + (y_max + y_max) * rand(1);
-zRand = (z_max - z_min).*rand(1);
-q_rand = [xRand yRand zRand];
-%plot3(q_rand(1), q_rand(2), q_rand(3), 'x', 'Color',  'black')
-
-ndist = [];
-for i = 1:1:length(node)
-    n = node(i);
-    tmp = dist_3d(n.coord, q_rand);
-    ndist = [ndist tmp];
-end
-[val, idx] = min(ndist);
-q_near = node(idx);
-end
-
-%%
-function [coordMatrix, counter] = GeneratePath(node, q_goal)
-D = [];
-for j = 1:1:length(node)
-    tmpdist = dist_3d(node(j).coord, q_goal.coord);
-    D = [D tmpdist];
-end
-% Search backwards from goal to start to find the optimal least cost path
-[val, idx] = min(D);
-q_final = node(idx);
-q_goal.parent = idx;
-q_end = q_goal;
-node = [node q_goal];
-counter = 0;
-coordMatrix = [];
-while q_end.parent ~= 0
-    start = q_end.parent;
-    coordMatrix = [q_end.coord; coordMatrix];
-    line([q_end.coord(1), node(start).coord(1)], [q_end.coord(2), node(start).coord(2)], [q_end.coord(3), node(start).coord(3)], 'Color', 'r', 'LineWidth', 4);
-    hold on
-    q_end = node(start);
-    counter = counter + 1;
 end
 end
 
@@ -388,7 +414,6 @@ end
 end
 
 %%
-
 function result = IsIntersectionPointInsideTriangle(intersectP,triangleVerts)
 
 u = triangleVerts(2,:) - triangleVerts(1,:);
@@ -420,34 +445,35 @@ end
 result = 1;                      % intersectP is in Triangle
 end
 
-%% IsCollision
-% This is based upon the output of questions 2.5 and 2.6
+%% IsCollision (UNUSED)
+% This is based upon the lab 5 exerises
 % Given a robot model (robot), and trajectory (i.e. joint state vector) (qMatrix)
 % and triangle obstacles in the environment (faces,vertex,faceNormals)
-function result = IsCollision(robot,qMatrix,faces,vertex,faceNormals,returnOnceFound)
-if nargin < 6
-    returnOnceFound = true;
-end
-result = false;
 
-for qIndex = 1:size(qMatrix,1)
-    % Get the transform of every joint (i.e. start and end of every link)
-    tr = GetLinkPoses(qMatrix(qIndex,:), robot);
-    
-    % Go through each link and also each triangle face
-    for i = 1 : size(tr,3)-1
-        for faceIndex = 1:size(faces,1)
-            vertOnPlane = vertex(faces(faceIndex,1)',:);
-            [intersectP,check] = LinePlaneIntersection(faceNormals(faceIndex,:),vertOnPlane,tr(1:3,4,i)',tr(1:3,4,i+1)');
-            if check == 1 && IsIntersectionPointInsideTriangle(intersectP,vertex(faces(faceIndex,:)',:))
-                %plot3(intersectP(1),intersectP(2),intersectP(3),'g*');
-                display('Intersection');
-                result = true;
-                if returnOnceFound
-                    return
-                end
-            end
-        end
-    end
-end
-end
+% function result = IsCollision(robot,qMatrix,faces,vertex,faceNormals,returnOnceFound)
+% if nargin < 6
+%     returnOnceFound = true;
+% end
+% result = false;
+%
+% for qIndex = 1:size(qMatrix,1)
+%     % Get the transform of every joint (i.e. start and end of every link)
+%     tr = GetLinkPoses(qMatrix(qIndex,:), robot);
+%
+%     % Go through each link and also each triangle face
+%     for i = 1 : size(tr,3)-1
+%         for faceIndex = 1:size(faces,1)
+%             vertOnPlane = vertex(faces(faceIndex,1)',:);
+%             [intersectP,check] = LinePlaneIntersection(faceNormals(faceIndex,:),vertOnPlane,tr(1:3,4,i)',tr(1:3,4,i+1)');
+%             if check == 1 && IsIntersectionPointInsideTriangle(intersectP,vertex(faces(faceIndex,:)',:))
+%                 %plot3(intersectP(1),intersectP(2),intersectP(3),'g*');
+%                 display('Intersection');
+%                 result = true;
+%                 if returnOnceFound
+%                     return
+%                 end
+%             end
+%         end
+%     end
+% end
+% end

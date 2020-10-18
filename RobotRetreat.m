@@ -1,6 +1,7 @@
 classdef RobotRetreat < handle
-    %UNTITLED5 Summary of this class goes here
-    %   Detailed explanation goes here
+    % This class uses visual servoing to simulate the robot
+    % reacting to safety symbol by retreating backwards to maintain a
+    % safe distance between itself and the symbol
     
     properties
         robot;
@@ -22,23 +23,23 @@ classdef RobotRetreat < handle
             self.robot = HansCute();
         end
         
+        %%
         function SetPointsVS(self)
             x = 0.5;
             y = 0;
             z = 0.15;
+            
+            % insert object into environment
             Environment(x,y,z,'sign.ply', false, 0.1, 0.1);
             
-            
-            %plate = Plate();
-            %plate.MovePlate(transl([x,y,z])*troty(pi/2));
-
-            %Create 3D points (actual points in figure)          
-            self.P=[x,x,x,x; 
-               y-0.075,y+0.075,y+0.075,y-0.075; %0.15 away
+            %Create 3D points (actual points in figure)
+            self.P=[x,x,x,x;
+                y-0.075,y+0.075,y+0.075,y-0.075; %0.15 away
                 z-0.075,z-0.075,z+0.075,z+0.075]; %0.15 away
-       
+            
         end
         
+        %%
         function InitialiseVS(self)
             % Create image target (points in the image plane)
             self.pStar = [300 300 600 600; % bottomleft,topleft,topright,bottomright
@@ -62,14 +63,13 @@ classdef RobotRetreat < handle
             %Display robot
             q0 = [0,0,0,pi/2,0,0,0];
             qCurrent = self.robot.model.getpos();
-            self.Tc0= self.robot.model.fkine(q0);           
+            self.Tc0= self.robot.model.fkine(q0);
             self.robot.model.animate(jtraj(qCurrent,q0,30));
             drawnow
         end
         
+        %%
         function PlotPointsVS(self)
-            %plate.MovePlate(transl([P(1,1),py,pz])*trotx(pi));
-            
             % plot camera and points
             self.Tc0= self.robot.model.fkine(self.robot.model.getpos);
             self.cam.T = self.Tc0;
@@ -98,9 +98,10 @@ classdef RobotRetreat < handle
             self.history = [];
         end
         
+        %%
         function AnimateVS(self)
-            %qVS = nan(1,7);
             q0 = [0,0,0,pi/2,0,0,0];
+            
             for ksteps = 1:150
                 %ksteps = ksteps + 1;
                 
@@ -150,14 +151,11 @@ classdef RobotRetreat < handle
                 
                 %Update joints
                 q = q0 + (1/self.fps)*qp';
-                %qVS(end+1,:) = q;
                 self.robot.model.animate(q);
                 
                 %Get camera location
                 Tc = self.robot.model.fkine(q);
                 self.cam.T = Tc;
-                %dist = Tc * transl(0,0,0.15);
-                %plate.MovePlate(dist);
                 drawnow
                 
                 % update the history variables
@@ -175,20 +173,14 @@ classdef RobotRetreat < handle
                 
                 self.history = [self.history hist];
                 
-                pause(1/self.fps)
-                
-                %         if ~isempty(200) && (ksteps > 200)
-                %             break;
-                %         end
+                pause(1/self.fps)               
                 
                 %update current joint position
                 q0 = q;
-            end %loop finishes
+            end
         end
         
-        
-        
-        
+%%        
     end
 end
 

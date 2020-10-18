@@ -1,5 +1,5 @@
 classdef Sponge < handle
-    % This class creates the bricks using plyread and updates brick
+    % This class creates the sponge using plyread and updates sponge
     % locations.
     
     properties
