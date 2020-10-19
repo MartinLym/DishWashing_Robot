@@ -2,6 +2,8 @@ clc
 clear
 robot = HANSCUTE();
 robot.initROSConnection();
+arduinoObj = arduino('COM9','Uno','Libraries','Ultrasonic');
+ultrasonicObj = ultrasonic(arduinoObj,'D2','D3');
 
 [armControllerPub, armControllerMsg, clawControllerPub, clawControllerMsg] = robot.setupHansPublisher();
 qStart = [0 0.7503 -0.0706 0.8442 0.0169 1.5370 -0.069];
@@ -363,18 +365,30 @@ function moveRobot(robot, qMatrix, trMatrix, armControllerPub, armControllerMsg)
 
         q2 = robot.model.getpos + deltaT * qdot(i,:);
         robot.model.animate(q2);
-
-        velocity = ((q2 - q1)/(deltaT*10));
+        
+        speedModulator = obtainSpeedModulator();
+        velocity = (((q2 - q1)/deltaT) * speedModulator;
         armControllerMsg.Points.Positions = q2;
         armControllerMsg.Points.Velocities = velocity;
         armControllerMsg.Points.TimeFromStart.Sec = secCounter;
         armControllerMsg.Points.TimeFromStart.Nsec = nSecCounter;
         nSecCounter = int16(nSecCounter + (deltaT_Nsec/2));
         send(armControllerPub, armControllerMsg);
-        %pause(0.01);
+        
         if nSecCounter >= 1e+09
             nSecCounter = 0;
             secCounter = secCounter + 1;
         end
     end
+end
+
+function speedModulator = obtainSpeedModulator()
+    maxDistance = 0.5;
+    distance = readDistance(ultrasonicObj);
+    if distance > 0.5
+        distance = 0.5;
+    elseif distance < 0.2
+        distance = 0.2;        
+    end
+    speedModulator = distance/maxDistance;
 end
