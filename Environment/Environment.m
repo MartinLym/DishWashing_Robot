@@ -55,9 +55,9 @@ classdef Environment
         
         function wayPointPoses = pickUpPlate(self) % 3 Waypoints
             wayPointPoses = zeros(4,4,3);
-            self.nPose(:,:,1) = self.nPose(:,:,1) * transl(0,-0.12, -0.02);
+            self.nPose(:,:,1) = self.nPose(:,:,1) * transl(0,-0.15, -0.02);
             self.nPose(:,:,2) = self.pose * trotz(-pi/4) * trotx(-pi/2) * transl(0, -0.05, -0.1);% * trotx(-pi/2) * transl(0, -0.02, 0.1);
-            self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0, -0.05, 0.05) * trotx(-pi/6);
+            self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0, -0.05, 0.05) * trotx(-pi/4);
             
             for i = 1:size(wayPointPoses,3)
                 wayPointPoses(:,:,i) = self.nPose(:,:,i);
@@ -89,14 +89,11 @@ classdef Environment
         end
         
         function wayPointPoses = cleanPlate(self, robot)
-            wayPointPoses = zeros(4,4,6);
-            self.nPose(:,:,1) = robot.model.fkine(robot.model.getpos);
-            self.nPose(:,:,1) = self.nPose(:,:,1) * transl(-0.03,-0.03,0);
-            self.nPose(:,:,2) = self.nPose(:,:,1) * transl(-0.03,0.03,0);
-            self.nPose(:,:,3) = self.nPose(:,:,2) * transl(0.03,0.03,0);
-            self.nPose(:,:,4) = self.nPose(:,:,3) * transl(0.03,-0.03,0);
-            self.nPose(:,:,5) = self.nPose(:,:,4) * transl(-0.03,-0.03,0);
-            self.nPose(:,:,6) = self.pose * transl(0,0,-0.05);
+            wayPointPoses = zeros(4,4,3);
+            qCleanStart = [-0.1411 0.9848 0.0660 0.8283 0.1396 1.2517 1.4097];
+            self.nPose(:,:,1) = robot.model.fkine(robot.model.getpos);         
+            self.nPose(:,:,2) = self.pose * transl(-0.05,0,-0.05);
+            self.nPose(:,:,3) = robot.model.fkine(qCleanStart);
             
             for i = 1:size(wayPointPoses,3)
                 wayPointPoses(:,:,i) = self.nPose(:,:,i);

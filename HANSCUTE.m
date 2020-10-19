@@ -381,6 +381,16 @@ classdef HANSCUTE < handle
             currentJoints = currentJoints(1:7);
         end
         
+        function wayPointPoses = scoop(robot)
+            wayPointPoses = zeros(4,4,2);
+            q = robot.getRealRobotJoints();
+            wayPointPoses(:,:,1) = robot.model.fkine(q);
+            wayPointPoses(:,:,1) = wayPointPoses(:,:,1) * transl(0, 0.05, 0.02);
+            wayPointPoses(:,:,2) = wayPointPoses(:,:,1) * trotx(pi/4);
+            %wayPointPoses(:,:,3) = wayPointPoses(:,:,2) * trotx(pi/4);
+            
+        end
+        
     end
     
 end
