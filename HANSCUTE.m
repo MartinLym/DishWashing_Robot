@@ -81,6 +81,8 @@ classdef HANSCUTE < handle
         end
         
         function [qMatrix, sendQMatrix, velMatrix, trMatrix, poseMatrix, coordMatrix, positionError, angleError, m] = obtainMotionMatrices(self, startPose, endPose, numNodes, obj) % Uses RRT* to avoid inputted objects
+            % Code below is referenced from 2D/3D RRT# algorithm add on and
+            % customized to meet the needs of the robot
             % Grabs start pose and end pose for RRT* path planning
             self.startPose = startPose
             self.endPose = endPose;
@@ -146,7 +148,7 @@ classdef HANSCUTE < handle
                        if q_nearest(k).cost + dist_3d(q_nearest(k).coord, q_new.coord) < C_min
                            q_min = q_nearest(k);
                            C_min = q_nearest(k).cost + dist_3d(q_nearest(k).coord, q_new.coord);
-                           %line([q_min.coord(1), q_new.coord(1)], [q_min.coord(2), q_new.coord(2)], [q_min.coord(3), q_new.coord(3)], 'Color', 'g');
+                           line([q_min.coord(1), q_new.coord(1)], [q_min.coord(2), q_new.coord(2)], [q_min.coord(3), q_new.coord(3)], 'Color', 'g');
                            hold on
                        end
                    end
@@ -171,6 +173,7 @@ classdef HANSCUTE < handle
                         
         end
         
+        % Interpolate between the positions obtained from the RRT algorithm
         function [qMatrix, trMatrix, poseMatrix] = obtainPoseJointMatrices(self, coordMatrix, numWayPoints) 
                 steps = 100;                
                 q = [];
@@ -396,12 +399,13 @@ classdef HANSCUTE < handle
 end
 
 
-function safe = checkCollision(obj, numOfObj, q1Node, q2Node)
+function safe = checkCollision(obj, numOfObj, q1Node, q2Node) % check if the connection between q1Node and q2Node would collide
+    % Code below is referencing lab 5 and line plane intersection
     for i = 1:1:numOfObj
         faces = obj(i).objEnvironment.faces;
         vertex = obj(i).objEnvironment.vertex;
         faceNormals = obj(i).objEnvironment.faceNormals;
-        
+
         for faceIndex = 1:size(faces,1)
             vertOnPlane = vertex(faces(faceIndex,1)',:);
             [intersectionNode, checkNode] = LinePlaneIntersection(faceNormals(faceIndex,:),vertOnPlane, q1Node, q2Node);
@@ -413,7 +417,7 @@ function safe = checkCollision(obj, numOfObj, q1Node, q2Node)
             end
             safe = 1;
         end
-        
+
     end
 end
 
